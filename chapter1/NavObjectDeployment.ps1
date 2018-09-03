@@ -1,4 +1,15 @@
-﻿Import-Module “C:\Program Files (x86)\Microsoft Dynamics NAV\91\RoleTailored Client\Microsoft.Dynamics.Nav.Ide.psm1”
+﻿if ([Environment]::Is64BitProcess)
+{
+    $RtcFolder = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\Microsoft Dynamics NAV\110\RoleTailored Client'
+}
+else
+{
+    $RtcFolder = 'HKLM:\SOFTWARE\Microsoft\Microsoft Dynamics NAV\110\RoleTailored Client'
+}
+
+Test-Path $RtcFolder
+$IdeModulePath = (Join-Path (Get-ItemProperty $RtcFolder).Path Microsoft.Dynamics.Nav.Ide.psm1)
+Import-Module $IdeModulePath
 
 function Deploy-ObjectsToTestServer
 {
