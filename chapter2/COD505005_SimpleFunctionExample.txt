@@ -1,0 +1,28 @@
+OBJECT Codeunit 50505 Simple Function Example
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            SayHello;
+          END;
+
+  }
+  CODE
+  {
+
+    LOCAL PROCEDURE SayHello@1();
+    BEGIN
+      MESSAGE('Hello World');
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

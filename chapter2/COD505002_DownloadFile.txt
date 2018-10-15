@@ -1,0 +1,69 @@
+OBJECT Codeunit 50502 Download File
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=VAR
+            ServerFileName@1002 : Text;
+          BEGIN
+            ServerFileName := FileManagement.ServerTempFileName('xml');
+            ExportPriceList(ServerFileName);
+            ZipAndDownloadFile(ServerFileName);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      FileManagement@1000 : Codeunit 419;
+
+    LOCAL PROCEDURE ExportPriceList@3(FileName@1002 : Text);
+    VAR
+      Item@1001 : Record 27;
+      XMLDOMManagement@1000 : Codeunit 6224;
+      XMLDoc@1003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      RootNode@1004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      ItemNode@1005 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XmlOutStream@1006 : OutStream;
+      F@1007 : File;
+    BEGIN
+      XMLDoc := XMLDoc.XmlDocument;
+      XMLDOMManagement.AddRootElement(XMLDoc,'PriceList',RootNode);
+      IF Item.FINDSET THEN
+        REPEAT
+          XMLDOMManagement.AddElement(RootNode,'Item',Item."No.",'',ItemNode);
+          XMLDOMManagement.AddAttribute(ItemNode,'Description',Item.Description);
+          XMLDOMManagement.AddAttribute(ItemNode,'Price',FORMAT(Item."Unit Price"));
+        UNTIL Item.NEXT = 0;
+
+      F.CREATE(FileName);
+      F.CREATEOUTSTREAM(XmlOutStream);
+      XMLDoc.Save(XmlOutStream);
+      F.CLOSE;
+    END;
+
+    LOCAL PROCEDURE ZipAndDownloadFile@7(ServerFileName@1002 : Text);
+    VAR
+      ZipFileName@1001 : Text;
+      ClientFileName@1000 : Text;
+    BEGIN
+      ZipFileName:= FileManagement.CreateZipArchiveObject;
+      FileManagement.AddFileToZipArchive(ServerFileName,STRSUBSTNO('PriceList - %1.txt',WORKDATE));
+      FileManagement.CloseZipArchive;
+      ClientFileName := FileManagement.SaveFileDialog('Save File','','ZIP archive|*.zip');
+      FileManagement.DownloadToFile(ZipFileName,ClientFileName);
+
+      FileManagement.DeleteServerFile(ServerFileName);
+      FileManagement.DeleteServerFile(ZipFileName);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

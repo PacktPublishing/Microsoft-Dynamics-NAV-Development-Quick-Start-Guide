@@ -1,0 +1,36 @@
+OBJECT Codeunit 50511 Text Constant Example
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=VAR
+            CustLedgerEntry@1000 : Record 21;
+            OverdueInvoicesCount@1001 : Integer;
+          BEGIN
+            CustLedgerEntry.SETRANGE("Document Type",CustLedgerEntry."Document Type"::Invoice);
+            CustLedgerEntry.SETFILTER("Due Date",'<%1',WORKDATE);
+            CustLedgerEntry.SETRANGE(Open,TRUE);
+            OverdueInvoicesCount := CustLedgerEntry.COUNT;
+            IF OverdueInvoicesCount > 0 THEN
+              MESSAGE(OverdueCountMsg,OverdueInvoicesCount,WORKDATE)
+            ELSE
+              MESSAGE(NoOverdueInvoicesMsg);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      OverdueCountMsg@1000 : TextConst 'ENU=There are %1 overdue invoices on %2';
+      NoOverdueInvoicesMsg@1001 : TextConst 'ENU=All customer invoices are paid';
+
+    BEGIN
+    END.
+  }
+}
+

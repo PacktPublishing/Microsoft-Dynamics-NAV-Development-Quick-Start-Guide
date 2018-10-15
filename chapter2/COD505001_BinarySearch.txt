@@ -1,0 +1,68 @@
+OBJECT Codeunit 50501 Binary Search
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=VAR
+            IntArray@1000 : ARRAY [100] OF Integer;
+            Index@1001 : Integer;
+          BEGIN
+            GenerateRandomSortedAray(IntArray);
+            Index := BinarySearch(IntArray,IntArray[50]);
+            IF Index = 0 THEN
+              MESSAGE(ValueNotFoundMsg)
+            ELSE
+              MESSAGE(FoundValueMsg,Index,25);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      ValueNotFoundMsg@1000 : TextConst 'ENU=Value not found in array.';
+      FoundValueMsg@1001 : TextConst 'ENU=Element No. %1 has value %2.';
+
+    LOCAL PROCEDURE BinarySearch@1(VAR InputArray@1000 : ARRAY [100] OF Integer;SearchValue@1001 : Integer) : Integer;
+    VAR
+      LeftIndex@1002 : Integer;
+      RightIndex@1003 : Integer;
+      MidIndex@1004 : Integer;
+    BEGIN
+      LeftIndex := 1;
+      RightIndex := ARRAYLEN(InputArray);
+
+      WHILE LeftIndex < RightIndex DO BEGIN
+        IF InputArray[LeftIndex] = SearchValue THEN
+          EXIT(LeftIndex);
+        IF InputArray[RightIndex] = SearchValue THEN
+          EXIT(RightIndex);
+
+        MidIndex := (LeftIndex + RightIndex) DIV 2;
+        IF InputArray[MidIndex] < SearchValue THEN
+          LeftIndex := MidIndex
+        ELSE
+          RightIndex := MidIndex;
+      END;
+
+      EXIT(0);
+    END;
+
+    LOCAL PROCEDURE GenerateRandomSortedAray@2(VAR InputArray@1000 : ARRAY [100] OF Integer);
+    VAR
+      I@1001 : Integer;
+    BEGIN
+      InputArray[1] := RANDOM(100);
+      FOR I := 2 TO ARRAYLEN(InputArray) DO
+        InputArray[I] := InputArray[I - 1] + RANDOM(10);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

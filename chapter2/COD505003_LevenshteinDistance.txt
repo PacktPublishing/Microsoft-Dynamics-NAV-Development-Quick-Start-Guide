@@ -1,0 +1,61 @@
+OBJECT Codeunit 50503 Levenshtein Distance
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            MESSAGE(FORMAT(Distance('bland','black')));
+          END;
+
+  }
+  CODE
+  {
+
+    LOCAL PROCEDURE Distance@2(S1@1000 : Text;S2@1001 : Text) : Integer;
+    BEGIN
+      EXIT(RecursiveDistance(UPPERCASE(S1),UPPERCASE(S2),STRLEN(S1),STRLEN(S2)));
+    END;
+
+    LOCAL PROCEDURE RecursiveDistance@3(S1@1000 : Text;S2@1001 : Text;Position1@1002 : Integer;Position2@1003 : Integer) : Integer;
+    VAR
+      Dist@1004 : Integer;
+    BEGIN
+      IF Position1 = 0 THEN
+        EXIT(Position2);
+      IF Position2 = 0 THEN
+        EXIT(Position1);
+
+      IF S1[Position1] = S2[Position2] THEN
+        Dist := 0
+      ELSE
+        Dist := 1;
+
+      EXIT(
+        Min(
+          RecursiveDistance(S1,S2,Position1 - 1,Position2) + 1,
+          RecursiveDistance(S1,S2,Position1,Position2 - 1) + 1,
+          RecursiveDistance(S1,S2,Position1 - 1,Position2 - 1) + Dist));
+    END;
+
+    LOCAL PROCEDURE Min@1(A@1002 : Integer;B@1001 : Integer;C@1000 : Integer) : Integer;
+    BEGIN
+      IF A <= B THEN BEGIN
+        IF A <= C THEN
+          EXIT(A);
+      END ELSE
+        IF B <= C THEN
+          EXIT(B);
+
+      EXIT(C);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

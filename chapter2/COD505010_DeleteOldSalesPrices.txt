@@ -1,0 +1,26 @@
+OBJECT Codeunit 50510 Delete Old Sales Prices
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=VAR
+            SalesPrice@1000 : Record 7002;
+          BEGIN
+            SalesPrice.SETRANGE("Ending Date",0D,CALCDATE('<-1Y>',WORKDATE));
+            SalesPrice.DELETEALL;
+          END;
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

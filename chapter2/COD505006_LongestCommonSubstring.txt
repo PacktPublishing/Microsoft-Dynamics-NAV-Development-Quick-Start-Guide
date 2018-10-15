@@ -1,0 +1,49 @@
+OBJECT Codeunit 50506 Longest Common Substring
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            MESSAGE(FindLongestCommonSubstring('message','glissade'));
+          END;
+
+  }
+  CODE
+  {
+
+    LOCAL PROCEDURE FindLongestCommonSubstring@1(S1@1000 : Text[100];S2@1001 : Text[100]) Res : Text;
+    VAR
+      Length@1002 : ARRAY [100,100] OF Integer;
+      Longest@1003 : Integer;
+      I@1004 : Integer;
+      J@1005 : Integer;
+    BEGIN
+      FOR I := 1 TO STRLEN(S1) DO
+        FOR J := 1 TO STRLEN(S2) DO
+          IF S1[I] = S2[J] THEN BEGIN
+            IF (I = 1) OR (J = 1) THEN
+              Length[I,J] := 1
+            ELSE
+              Length[I,J] := Length[I - 1,J - 1] + 1;
+
+            IF Length[I,J] > Longest THEN BEGIN
+              Longest := Length[I,J];
+              Res := COPYSTR(S1,I - Longest + 1,Longest);
+            END
+            ELSE IF Length[I,J] = Longest THEN
+              Res := Res + COPYSTR(S1,I - Longest + 1,Longest);
+          END
+          ELSE
+            Length[I,J] := 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,97 @@
+OBJECT Codeunit 50509 Update Sales Prices
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            UpdatePrices;
+          END;
+
+  }
+  CODE
+  {
+
+    LOCAL PROCEDURE UpdatePrices@2();
+    VAR
+      Item@1000 : Record 27;
+      SalesPrice@1001 : Decimal;
+    BEGIN
+      IF Item.FINDSET THEN
+        REPEAT
+          IF NOT SalesInPastMonthExist(Item."No.") THEN BEGIN
+            SalesPrice := FindLastSalesInvoicePrice(Item."No.");
+            IF SalesPrice = 0 THEN
+              SalesPrice := Item."Unit Price";
+            IF SalesPrice > 0 THEN
+              SetSalesLineDiscountForItem(Item."No.",SalesPrice * 0.9,WORKDATE + 1,CALCDATE('<+1M>',WORKDATE));
+          END;
+        UNTIL Item.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE FindLastSalesInvoicePrice@3(ItemNo@1000 : Code[20]) : Decimal;
+    VAR
+      ValueEntry@1001 : Record 5802;
+    BEGIN
+      ValueEntry.SETCURRENTKEY("Item No.","Posting Date");
+      ValueEntry.SETRANGE("Item No.",ItemNo);
+      ValueEntry.SETRANGE("Entry Type",ValueEntry."Entry Type"::"Direct Cost");
+      ValueEntry.SETRANGE("Item Ledger Entry Type",ValueEntry."Item Ledger Entry Type"::Sale);
+      ValueEntry.SETFILTER("Sales Amount (Actual)",'>0');
+      ValueEntry.SETFILTER("Valued Quantity",'<0');
+      IF ValueEntry.FINDLAST THEN
+        EXIT(ROUND(ValueEntry."Sales Amount (Actual)" / ValueEntry."Valued Quantity",GetUnitAmountRoundingPrecision));
+
+      EXIT(0);
+    END;
+
+    LOCAL PROCEDURE SalesInPastMonthExist@1(ItemNo@1001 : Code[20]) : Boolean;
+    VAR
+      ItemLedgerEntry@1000 : Record 32;
+    BEGIN
+      ItemLedgerEntry.SETRANGE("Item No.",ItemNo);
+      ItemLedgerEntry.SETRANGE("Entry Type",ItemLedgerEntry."Entry Type"::Sale);
+      ItemLedgerEntry.SETFILTER(
+        "Document Type",
+        '%1|%2',
+        ItemLedgerEntry."Document Type"::"Sales Invoice",
+        ItemLedgerEntry."Document Type"::"Sales Shipment");
+      ItemLedgerEntry.SETRANGE("Posting Date",CALCDATE('<-1M>',WORKDATE),WORKDATE);
+      EXIT(NOT ItemLedgerEntry.ISEMPTY);
+    END;
+
+    LOCAL PROCEDURE GetUnitAmountRoundingPrecision@4() : Decimal;
+    VAR
+      GLSetup@1002 : Record 98;
+    BEGIN
+      GLSetup.GET;
+      EXIT(GLSetup."Unit-Amount Rounding Precision");
+    END;
+
+    LOCAL PROCEDURE SetSalesLineDiscountForItem@5(ItemNo@1000 : Code[20];UnitPrice@1001 : Decimal;StartingDate@1002 : Date;EndingDate@1003 : Date);
+    VAR
+      SalesPrice@1004 : Record 7002;
+      RecordFound@1005 : Boolean;
+    BEGIN
+      SalesPrice.VALIDATE("Item No.",ItemNo);
+      SalesPrice.VALIDATE("Sales Type",SalesPrice."Sales Type"::"All Customers");
+      SalesPrice.VALIDATE("Starting Date",StartingDate);
+      RecordFound := SalesPrice.FIND;
+
+      SalesPrice.VALIDATE("Unit Price",UnitPrice);
+      SalesPrice.VALIDATE("Ending Date",EndingDate);
+      IF RecordFound THEN
+        SalesPrice.MODIFY(TRUE)
+      ELSE
+        SalesPrice.INSERT(TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

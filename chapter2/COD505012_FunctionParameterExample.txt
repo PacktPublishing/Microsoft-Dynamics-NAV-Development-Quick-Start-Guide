@@ -1,0 +1,28 @@
+OBJECT Codeunit 50512 Simple Parameter Example
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            ShowMessage('Greetings!');
+          END;
+
+  }
+  CODE
+  {
+
+    LOCAL PROCEDURE ShowMessage@1(MessageText@1000 : Text);
+    BEGIN
+      MESSAGE(MessageText);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+
