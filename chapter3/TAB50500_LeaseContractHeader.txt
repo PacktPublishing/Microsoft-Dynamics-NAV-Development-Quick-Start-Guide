@@ -1,0 +1,84 @@
+OBJECT Table 50500 Lease Contract Header
+{
+  OBJECT-PROPERTIES
+  {
+    Date=23.09.18;
+    Time=21:19:52;
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnInsert=BEGIN
+               SalesSetup.GET;
+
+               IF "No." = '' THEN BEGIN
+                 SalesSetup.TESTFIELD("Lease Contract Nos.");
+                 NoSeriesMgt.InitSeries(SalesSetup."Lease Contract Nos.",xRec."No. Series","Starting Date","No.","No. Series");
+               END;
+             END;
+
+    OnDelete=VAR
+               LeaseContractLine@1000 : Record 50501;
+             BEGIN
+               LeaseContractLine.SETRANGE("Contract No.","No.");
+               LeaseContractLine.DELETEALL(TRUE);
+             END;
+
+    LookupPageID=Page50500;
+    DrillDownPageID=Page50500;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        ;OnValidate=BEGIN
+                                                                SalesSetup.GET;
+                                                                NoSeriesMgt.TestManual(SalesSetup."Lease Contract Nos.");
+                                                                "No. Series" := '';
+                                                              END;
+                                                               }
+    { 2   ;   ;Customer No.        ;Code20        ;TableRelation=Customer }
+    { 3   ;   ;Starting Date       ;Date          ;OnValidate=BEGIN
+                                                                ValidateDates;
+                                                              END;
+
+                                                   NotBlank=Yes }
+    { 4   ;   ;Ending Date         ;Date          ;OnValidate=BEGIN
+                                                                ValidateDates;
+                                                              END;
+
+                                                   NotBlank=Yes }
+    { 5   ;   ;Total Amount        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Lease Contract Line".Amount WHERE (Contract No.=FIELD(No.),
+                                                                                                       Item No.=FIELD(Item No. Filter))) }
+    { 6   ;   ;Item No. Filter     ;Code20        ;FieldClass=FlowFilter }
+    { 7   ;   ;Amount Paid         ;Decimal        }
+    { 8   ;   ;No. Series          ;Code10         }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      WrongStartEndDateErr@1000 : TextConst 'ENU=Starting date cannot be later than the ending date';
+      SalesSetup@1001 : Record 311;
+      NoSeriesMgt@1002 : Codeunit 396;
+
+    LOCAL PROCEDURE ValidateDates@1();
+    BEGIN
+      IF ("Starting Date" = 0D) OR ("Ending Date" = 0D) THEN
+        EXIT;
+
+      IF "Ending Date" > "Starting Date" THEN
+        ERROR(WrongStartEndDateErr);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

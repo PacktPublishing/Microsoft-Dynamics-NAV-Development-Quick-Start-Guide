@@ -1,0 +1,111 @@
+OBJECT Table 50502 Customer Payment
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09.11.18;
+    Time=[ 1:38:42];
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page50507;
+    DrillDownPageID=Page50507;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer        }
+    { 2   ;   ;Contract No.        ;Code20         }
+    { 3   ;   ;Contract Line No.   ;Integer        }
+    { 4   ;   ;Payment Date        ;Date           }
+    { 5   ;   ;Amount              ;Decimal        }
+    { 6   ;   ;Journal Line Created;Boolean        }
+    { 7   ;   ;Journal Line Posted ;Boolean       ;Description=Advanced }
+    { 8   ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Global Dimension 1 Code;
+                                                   CaptionClass='1,1,1' }
+    { 9   ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Global Dimension 2 Code;
+                                                   CaptionClass='1,1,2' }
+    { 10  ;   ;Customer Group Code ;Code20        ;OnValidate=BEGIN
+                                                                "Customer Group Code" := ValidateDimensionValue("Customer Group Code",LookupOption::CustomerGroup);
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              NewValue@1000 : Code[20];
+                                                            BEGIN
+                                                              IF LookupDimensionValue(NewValue,LookupOption::CustomerGroup) THEN
+                                                                "Customer Group Code" := NewValue;
+                                                            END;
+                                                             }
+    { 11  ;   ;Salesperson Code    ;Code20        ;OnValidate=BEGIN
+                                                                "Salesperson Code" := ValidateDimensionValue("Salesperson Code",LookupOption::Salesperson);
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              NewValue@1000 : Code[20];
+                                                            BEGIN
+                                                              IF LookupDimensionValue(NewValue,LookupOption::Salesperson) THEN
+                                                                "Salesperson Code" := NewValue;
+                                                            END;
+                                                             }
+    { 12  ;   ;Customer No.        ;Code20        ;TableRelation=Customer }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;Clustered=Yes }
+    {    ;Contract No.,Payment Date,Journal Line Created;
+                                                   SumIndexFields=Amount }
+    {    ;Contract Line No.                       ;SumIndexFields=Amount }
+    {    ;Customer No.,Journal Line Posted         }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      SalesSetup@1000 : Record 311;
+      LookupOption@1001 : 'CustomerGroup,Salesperson';
+
+    LOCAL PROCEDURE LookupDimensionValue@1(VAR SelectedValue@1002 : Code[20];LookupDim@1001 : Option) : Boolean;
+    VAR
+      DimensionValue@1000 : Record 349;
+      UserAction@1003 : Action;
+    BEGIN
+      SetDimensionCodeFilter(DimensionValue,LookupDim);
+      UserAction := PAGE.RUNMODAL(0,DimensionValue);
+      SelectedValue := DimensionValue.Code;
+      EXIT(UserAction = ACTION::LookupOK);
+    END;
+
+    LOCAL PROCEDURE ValidateDimensionValue@2(EnteredDimValue@1002 : Code[20];DimOption@1001 : Option) : Code[20];
+    VAR
+      DimensionValue@1000 : Record 349;
+    BEGIN
+      SetDimensionCodeFilter(DimensionValue,DimOption);
+      DimensionValue.FINDFIRST;
+      DimensionValue.Code := EnteredDimValue;
+      DimensionValue.FIND('=>');
+      EXIT(DimensionValue.Code);
+    END;
+
+    LOCAL PROCEDURE SetDimensionCodeFilter@4(VAR DimensionValue@1000 : Record 349;DimensionOption@1001 : Option);
+    BEGIN
+      SalesSetup.GET;
+
+      DimensionValue.FILTERGROUP(2);
+      CASE DimensionOption OF
+        LookupOption::CustomerGroup:
+          DimensionValue.SETRANGE("Dimension Code",SalesSetup."Customer Group Dimension Code");
+        LookupOption::Salesperson:
+          DimensionValue.SETRANGE("Dimension Code",SalesSetup."Salesperson Dimension Code");
+      END;
+      DimensionValue.FILTERGROUP(0);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+
