@@ -1,0 +1,103 @@
+OBJECT XMLport 50508 Export Lease Contracts
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11.11.18;
+    Time=22:19:55;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    Direction=Export;
+    OnInitXMLport=BEGIN
+                    IncludePaidContracts := TRUE;
+                  END;
+
+  }
+  ELEMENTS
+  {
+    { [{3BCAF0B0-024D-40E1-A88F-E88D2B21B337}];  ;LeaseContracts      ;Element ;Text     }
+
+    { [{F88E33EC-A803-4C1D-A0BC-424940B32833}];1 ;Contract            ;Element ;Table   ;
+                                                  SourceTable=Table50500;
+                                                  CalcFields=Field7,Field5;
+                                                  Export::OnAfterGetRecord=BEGIN
+                                                                             IF NOT IncludePaidContracts THEN BEGIN
+                                                                               "Lease Contract Header".CALCFIELDS("Total Amount","Amount Paid");
+                                                                               IF "Lease Contract Header"."Amount Paid" >= "Lease Contract Header"."Total Amount" THEN
+                                                                                 currXMLport.SKIP;
+                                                                             END;
+                                                                           END;
+                                                                            }
+
+    { [{D195215C-5618-4554-973C-763C700BD297}];2 ;No                  ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Lease Contract Header::No. }
+
+    { [{CCF5D2D2-E5A9-451B-9B81-ACA0DD59EA76}];2 ;CustomerNo          ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Lease Contract Header::Customer No. }
+
+    { [{CC70B9D5-7DBE-4885-8871-71CDFBE4B1AF}];2 ;StartingDate        ;Element ;Field   ;
+                                                  DataType=Date;
+                                                  SourceField=Lease Contract Header::Starting Date }
+
+    { [{1CEB1D8E-C25A-4C49-8294-F6302DE79969}];2 ;EndingDate          ;Element ;Field   ;
+                                                  DataType=Date;
+                                                  SourceField=Lease Contract Header::Ending Date }
+
+    { [{758A85F6-8CF0-4167-B87E-FD2CB86B2B44}];2 ;ContractLine        ;Element ;Table   ;
+                                                  SourceTable=Table50501;
+                                                  SourceTableView=SORTING(Field1,Field2);
+                                                  LinkFields=Field1=FIELD(Field1);
+                                                  LinkTable=Lease Contract Header }
+
+    { [{E2B372D4-33EC-42A9-A1D5-1A47FD98A219}];3 ;LineNo              ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Lease Contract Line::Line No. }
+
+    { [{37DD79C8-F956-49A3-8101-CD80F5AA5F41}];3 ;ItemNo              ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Lease Contract Line::Item No. }
+
+    { [{83BB9AD7-E685-4421-9EF5-8FF77C127FB0}];3 ;Description         ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Lease Contract Line::Description }
+
+    { [{991BD287-16E2-47D7-9C39-BA8F6DF6E0E6}];3 ;Amount              ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Lease Contract Line::Amount }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1   ;    ;Container ;
+                  Name=Parameters;
+                  ContainerType=ContentArea }
+
+      { 2   ;1   ;Field     ;
+                  Name=IncludePaidControl;
+                  CaptionML=ENU=Include paid contracts;
+                  SourceExpr=IncludePaidContracts }
+
+    }
+  }
+  CODE
+  {
+    VAR
+      IncludePaidContracts@1000 : Boolean;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,190 @@
+OBJECT Codeunit 50515 Lease Contract Events
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03.11.18;
+    Time=20:35:10;
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      ModifyNotAllowedErr@1000 : TextConst 'ENU=Invoice %1 was create from the contract %2. Invoice amount cannot be modified';
+      ConfirmPageCloseQst@1001 : TextConst 'ENU=Item unit price is not specified. Close the page anyway?';
+      CustomerPaymentsMgt@1002 : Codeunit 50504;
+      UnpaidContractErr@1003 : TextConst 'ENU=Unpaid contracts exist for customer %1.\Customer cannot be deleted.';
+      UnprocessedPaymentErr@1004 : TextConst 'ENU=Unprocessed payment exist for customer %1.\Customer cannot be deleted.';
+
+    [EventSubscriber(Table,37,OnBeforeModifyEvent)]
+    LOCAL PROCEDURE BlockOnModifySalesLine@4(VAR Rec@1000 : Record 37;VAR xRec@1001 : Record 37;RunTrigger@1002 : Boolean);
+    VAR
+      LeaseContractHeader@1003 : Record 50500;
+    BEGIN
+      IF (Rec."Document Type" <> Rec."Document Type"::Invoice) OR (Rec."Line Amount" = xRec."Line Amount") THEN
+        EXIT;
+
+      WITH LeaseContractHeader DO BEGIN
+        SETRANGE("Invoice No.",Rec."No.");
+        IF FINDFIRST THEN
+          ERROR(ModifyNotAllowedErr,"Invoice No.","No.");
+      END;
+    END;
+
+    [EventSubscriber(Table,18,OnBeforeDeleteEvent)]
+    LOCAL PROCEDURE BlockDeleteOnDeleteCustomer@9(VAR Rec@1000 : Record 18;RunTrigger@1001 : Boolean);
+    BEGIN
+      IF CustomerPaymentsMgt.UnpaidCustomerContractsExist(Rec."No.") THEN
+        ERROR(UnpaidContractErr,Rec."No.");
+
+      IF CustomerPaymentsMgt.UnprocessedCustomerPaymentsExist(Rec."No.") THEN
+        ERROR(UnprocessedPaymentErr,Rec."No.");
+    END;
+
+    [EventSubscriber(Page,30,OnQueryClosePageEvent)]
+    LOCAL PROCEDURE ConfirmOnItemCardQueryClosePage@8(VAR Rec@1000 : Record 27;VAR AllowClose@1001 : Boolean);
+    BEGIN
+      IF Rec."Unit Price" = 0 THEN
+        AllowClose := CONFIRM(ConfirmPageCloseQst);
+    END;
+
+    [EventSubscriber(Page,39,OnAfterActionEvent,Post)]
+    LOCAL PROCEDURE ShowEntriesOnAfterJournalPost@5(VAR Rec@1000 : Record 81);
+    VAR
+      GLRegister@1001 : Record 45;
+      GLEntry@1002 : Record 17;
+      GeneralLedgerEntries@1003 : Page 20;
+    BEGIN
+      IF GLRegister.FINDLAST THEN BEGIN
+        GLEntry.SETRANGE("Entry No.",GLRegister."From Entry No.",GLRegister."To Entry No.");
+        GeneralLedgerEntries.SETTABLEVIEW(GLEntry);
+        GeneralLedgerEntries.RUN;
+      END;
+    END;
+
+    [EventSubscriber(Table,36,OnAfterDeleteEvent)]
+    LOCAL PROCEDURE UpdateContractOnDeleteInvoice@3(VAR Rec@1000 : Record 36;RunTrigger@1001 : Boolean);
+    VAR
+      LeaseContractHeader@1002 : Record 50500;
+    BEGIN
+      IF Rec."Document Type" <> Rec."Document Type"::Invoice THEN
+        EXIT;
+
+      WITH LeaseContractHeader DO BEGIN
+        SETRANGE("Invoice No.",Rec."No.");
+        IF FINDFIRST THEN
+          IF NOT "Invoice Posted" THEN BEGIN
+            VALIDATE("Invoice No.",'');
+            MODIFY(TRUE);
+          END;
+      END;
+    END;
+
+    [EventSubscriber(Codeunit,80,OnAfterPostSalesDoc)]
+    LOCAL PROCEDURE UpdateContractOnPostInvoice@1(VAR SalesHeader@1000 : Record 36;VAR GenJnlPostLine@1001 : Codeunit 12;SalesShptHdrNo@1002 : Code[20];RetRcpHdrNo@1003 : Code[20];SalesInvHdrNo@1004 : Code[20];SalesCrMemoHdrNo@1005 : Code[20]);
+    VAR
+      LeaseContractHeader@1006 : Record 50500;
+    BEGIN
+      IF SalesHeader."Document Type" <> SalesHeader."Document Type"::Invoice THEN
+        EXIT;
+
+      WITH LeaseContractHeader DO BEGIN
+        SETRANGE("Invoice No.",SalesHeader."No.");
+        IF FINDFIRST THEN BEGIN
+          VALIDATE("Invoice Posted",TRUE);
+          MODIFY(TRUE);
+        END;
+      END;
+    END;
+
+    [EventSubscriber(Table,81,OnAfterDeleteEvent)]
+    LOCAL PROCEDURE UpdateCustPaymentOnDeleteJnlLine@6(VAR Rec@1000 : Record 81;RunTrigger@1001 : Boolean);
+    VAR
+      CustPaymentGenJnlLine@1003 : Record 50504;
+      CustomerPayment@1002 : Record 50502;
+    BEGIN
+      IF Rec."Document Type" <> Rec."Document Type"::Payment THEN
+        EXIT;
+
+      WITH CustPaymentGenJnlLine DO BEGIN
+        SETRANGE("Gen. Jnl. Template Name",Rec."Journal Template Name");
+        SETRANGE("Gen. Jnl. Batch Name",Rec."Journal Batch Name");
+        SETRANGE("Gen. Journal Line No.",Rec."Line No.");
+        IF FINDFIRST THEN BEGIN
+          CustomerPayment.GET("Customer Payment Entry No.");
+          CustomerPayment.VALIDATE("Journal Line Created",FALSE);
+          CustomerPayment.MODIFY(TRUE);
+
+          DELETE(TRUE);
+        END;
+      END;
+    END;
+
+    [EventSubscriber(Table,81,OnAfterModifyEvent)]
+    LOCAL PROCEDURE UpdateCustomerPaymentOnModifyJnlLine@7(VAR Rec@1000 : Record 81;VAR xRec@1001 : Record 81;RunTrigger@1002 : Boolean);
+    VAR
+      CustomerPayment@1003 : Record 50502;
+      CustPaymentGenJnlLine@1004 : Record 50504;
+    BEGIN
+      IF Rec."Document Type" <> Rec."Document Type"::Payment THEN
+        EXIT;
+
+      WITH CustPaymentGenJnlLine DO BEGIN
+        SETRANGE("Gen. Jnl. Template Name",Rec."Journal Template Name");
+        SETRANGE("Gen. Jnl. Batch Name",Rec."Journal Batch Name");
+        SETRANGE("Gen. Journal Line No.",Rec."Line No.");
+        IF FINDFIRST THEN BEGIN
+          CustomerPayment.GET("Customer Payment Entry No.");
+          CustomerPayment.VALIDATE(Amount,Rec.Amount);
+          CustomerPayment.MODIFY(TRUE);
+        END;
+      END;
+    END;
+
+    [EventSubscriber(Codeunit,12,OnBeforePostGenJnlLine)]
+    LOCAL PROCEDURE UpdateCustPaymentOnPostJournalLine@2(VAR GenJournalLine@1000 : Record 81);
+    VAR
+      CustPaymentGenJnlLine@1002 : Record 50504;
+      CustomerPayment@1003 : Record 50502;
+    BEGIN
+      IF GenJournalLine."Document Type" <> GenJournalLine."Document Type"::Payment THEN
+        EXIT;
+
+      WITH CustPaymentGenJnlLine DO BEGIN
+        SETRANGE("Gen. Jnl. Template Name",GenJournalLine."Journal Template Name");
+        SETRANGE("Gen. Jnl. Batch Name",GenJournalLine."Journal Batch Name");
+        SETRANGE("Gen. Journal Line No.",GenJournalLine."Line No.");
+        IF FINDFIRST THEN BEGIN
+          CustomerPayment.GET("Customer Payment Entry No.");
+          CustomerPayment.VALIDATE("Journal Line Posted",TRUE);
+          CustomerPayment.MODIFY(TRUE);
+        END;
+      END;
+    END;
+
+    [EventSubscriber(Page,21,OnNewRecordEvent)]
+    LOCAL PROCEDURE InitializeCustomerOnNewRecord@10(VAR Rec@1000 : Record 18;BelowxRec@1001 : Boolean;VAR xRec@1002 : Record 18);
+    VAR
+      LeaseContractSetup@1003 : Record 50505;
+    BEGIN
+      IF NOT LeaseContractSetup.GET THEN
+        EXIT;
+
+      IF Rec."Payment Terms Code" = '' THEN
+        Rec."Payment Terms Code" := LeaseContractSetup."Default Payment Terms Code";
+
+      IF Rec."Payment Method Code" = '' THEN
+        Rec."Payment Method Code" := LeaseContractSetup."Default Payment Method Code";
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

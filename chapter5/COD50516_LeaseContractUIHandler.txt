@@ -1,0 +1,50 @@
+OBJECT Codeunit 50516 Lease Contract UI Handler
+{
+  OBJECT-PROPERTIES
+  {
+    Date=30.10.18;
+    Time=[ 1:03:33];
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    EventSubscriberInstance=Manual;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      CustomerPaymentsMgt@1002 : Codeunit 50504;
+      Window@1001 : Dialog;
+      ProcessedLinesCount@1000 : Integer;
+      ProcessedLinesTok@1003 : TextConst 'ENU=No. of lines processed: #####1# out of #####2#.';
+      WindowUpdateThreshold@1004 : Integer;
+
+    PROCEDURE OpenLineCountWindow@3(TotalLinesCount@1000 : Integer;UpdateThreshold@1001 : Integer);
+    BEGIN
+      Window.OPEN(ProcessedLinesTok);
+      Window.UPDATE(2,TotalLinesCount);
+      WindowUpdateThreshold := UpdateThreshold;
+    END;
+
+    [EventSubscriber(Codeunit,50504,OnAfterCreatePaymentJnlLine)]
+    LOCAL PROCEDURE UpdateCountOnJournalLineCreated@2(VAR GenJournalLine@1000 : Record 81);
+    BEGIN
+      ProcessedLinesCount += 1;
+      IF ProcessedLinesCount MOD WindowUpdateThreshold = 0 THEN
+        Window.UPDATE(1,ProcessedLinesCount);
+    END;
+
+    PROCEDURE CloseLineCountWindow@4();
+    BEGIN
+      Window.CLOSE;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

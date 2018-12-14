@@ -1,0 +1,117 @@
+OBJECT Page 50505 Lease Contract
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11.10.18;
+    Time=22:59:27;
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50500;
+    PageType=Document;
+    OnAfterGetCurrRecord=BEGIN
+                           UpdatePaymentDates;
+                         END;
+
+    ActionList=ACTIONS
+    {
+      { 15      ;    ;ActionContainer;
+                      Name=Documents;
+                      ActionContainerType=NewDocumentItems }
+      { 16      ;1   ;Action    ;
+                      Name=CreateInvoice;
+                      CaptionML=ENU=Create Invoice;
+                      OnAction=VAR
+                                 CustomerPaymentsMgt@1000 : Codeunit 50504;
+                               BEGIN
+                                 CustomerPaymentsMgt.CreateSalesInvoice(Rec);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=General;
+                GroupType=Group }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Customer No." }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Starting Date";
+                OnValidate=BEGIN
+                             UpdatePaymentDates;
+                           END;
+                            }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Ending Date" }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Total Amount" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Amount Paid" }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Payment Terms Code" }
+
+    { 10  ;2   ;Field     ;
+                Name=LastPaymentDate;
+                CaptionML=ENU=Last Payment Date;
+                SourceExpr=LastPaymentDate;
+                Editable=FALSE;
+                Style=Attention;
+                StyleExpr=OverduePayment }
+
+    { 11  ;2   ;Field     ;
+                Name=NextPaymentDate;
+                CaptionML=ENU=Next Payment Date;
+                SourceExpr=NextPaymentDate;
+                Editable=FALSE }
+
+    { 9   ;1   ;Part      ;
+                Name=ContractLines;
+                CaptionML=ENU=Contract Lines;
+                SubPageLink=Contract No.=FIELD(No.);
+                PagePartID=Page50504;
+                PartType=Page }
+
+    { 14  ;    ;Container ;
+                ContainerType=FactBoxArea }
+
+    { 13  ;1   ;Part      ;
+                SubPageLink=No.=FIELD(Customer No.);
+                PagePartID=Page50506;
+                PartType=Page }
+
+  }
+  CODE
+  {
+    VAR
+      CustomerPaymentsMgt@1003 : Codeunit 50504;
+      LastPaymentDate@1000 : Date;
+      NextPaymentDate@1001 : Date;
+      OverduePayment@1002 : Boolean;
+
+    LOCAL PROCEDURE UpdatePaymentDates@1();
+    BEGIN
+      LastPaymentDate := CustomerPaymentsMgt.FindLastCustomerPaymentDate("No.");
+      NextPaymentDate := CustomerPaymentsMgt.CalcNextPaymentDate("No.",WORKDATE);
+      OverduePayment := CustomerPaymentsMgt.CalcNextPaymentDate("No.",LastPaymentDate) < WORKDATE;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

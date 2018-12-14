@@ -1,0 +1,158 @@
+OBJECT Page 50505 Lease Contract
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12.11.18;
+    Time=[ 1:05:37];
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50500;
+    PageType=Document;
+    OnAfterGetCurrRecord=BEGIN
+                           UpdatePaymentDates;
+                         END;
+
+    ActionList=ACTIONS
+    {
+      { 15      ;    ;ActionContainer;
+                      Name=Documents;
+                      ActionContainerType=ActionItems }
+      { 16      ;1   ;Action    ;
+                      Name=CreateInvoice;
+                      CaptionML=ENU=Create Invoice;
+                      Promoted=Yes;
+                      Image=CreateDocument;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 CustomerPaymentsMgt@1000 : Codeunit 50504;
+                               BEGIN
+                                 CustomerPaymentsMgt.CreateSalesInvoice(Rec);
+                               END;
+                                }
+      { 17      ;1   ;Action    ;
+                      Name=ExportContract;
+                      CaptionML=ENU=Export Contract;
+                      OnAction=BEGIN
+                                 IF ExportContract("No.") THEN
+                                   MESSAGE(ContractExportedMsg)
+                                 ELSE
+                                   MESSAGE(CouldNotWriteFileErr);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=General;
+                GroupType=Group }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Customer No." }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Starting Date";
+                OnValidate=BEGIN
+                             UpdatePaymentDates;
+                           END;
+                            }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Ending Date" }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Total Amount" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Amount Paid" }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Payment Terms Code" }
+
+    { 10  ;2   ;Field     ;
+                Name=LastPaymentDate;
+                CaptionML=ENU=Last Payment Date;
+                SourceExpr=LastPaymentDate;
+                Editable=FALSE;
+                Style=Attention;
+                StyleExpr=OverduePayment }
+
+    { 11  ;2   ;Field     ;
+                Name=NextPaymentDate;
+                CaptionML=ENU=Next Payment Date;
+                SourceExpr=NextPaymentDate;
+                Editable=FALSE }
+
+    { 9   ;1   ;Part      ;
+                Name=ContractLines;
+                CaptionML=ENU=Contract Lines;
+                SubPageLink=Contract No.=FIELD(No.);
+                PagePartID=Page50504;
+                PartType=Page }
+
+    { 14  ;    ;Container ;
+                ContainerType=FactBoxArea }
+
+    { 13  ;1   ;Part      ;
+                CaptionML=ENU=Customer Statistics;
+                SubPageLink=No.=FIELD(Customer No.);
+                PagePartID=Page50506;
+                PartType=Page }
+
+  }
+  CODE
+  {
+    VAR
+      CustomerPaymentsMgt@1003 : Codeunit 50504;
+      LastPaymentDate@1000 : Date;
+      NextPaymentDate@1001 : Date;
+      OverduePayment@1002 : Boolean;
+      ContractExportedMsg@1005 : TextConst 'ENU=Contract was successfully exported';
+      CouldNotWriteFileErr@1006 : TextConst 'ENU=Could not write file';
+
+    LOCAL PROCEDURE UpdatePaymentDates@1();
+    BEGIN
+      LastPaymentDate := CustomerPaymentsMgt.FindLastCustomerPaymentDate("No.");
+      NextPaymentDate := CustomerPaymentsMgt.CalcNextPaymentDate("No.",WORKDATE);
+      OverduePayment := CustomerPaymentsMgt.CalcNextPaymentDate("No.",LastPaymentDate) < WORKDATE;
+    END;
+
+    LOCAL PROCEDURE ExportContract@2(ContractNo@1000 : Code[20]) : Boolean;
+    VAR
+      LeaseContractHeader@1002 : Record 50500;
+      FileManagement@1003 : Codeunit 419;
+      ExportLeaseContracts@1001 : XMLport 50508;
+      FileStream@1004 : OutStream;
+      FileName@1005 : Text;
+      OutFile@1006 : File;
+    BEGIN
+      FileName := FileManagement.SaveFileDialog('Export contract','','xml|*.xml');
+      IF FileName = '' THEN
+        ERROR('');
+
+      IF EXISTS(FileName) THEN
+        ERASE(FileName);
+
+      OutFile.CREATE(FileName);
+      OutFile.CREATEOUTSTREAM(FileStream);
+
+      LeaseContractHeader.SETRANGE("No.",ContractNo);
+      ExportLeaseContracts.SETTABLEVIEW(LeaseContractHeader);
+      ExportLeaseContracts.SETDESTINATION(FileStream);
+      EXIT(ExportLeaseContracts.EXPORT);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

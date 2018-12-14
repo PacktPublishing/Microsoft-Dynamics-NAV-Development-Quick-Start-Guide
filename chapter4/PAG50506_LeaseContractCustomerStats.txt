@@ -1,0 +1,104 @@
+OBJECT Page 50506 Lease Contract Customer Stats
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table18;
+    PageType=CardPart;
+    OnAfterGetCurrRecord=BEGIN
+                           CalculateCustomerTotals(TotalContracts,TotalPayments,"No.");
+                         END;
+
+  }
+  CONTROLS
+  {
+    { 1   ;    ;Container ;
+                Name=CustomerStats;
+                CaptionML=ENU=Customer Statistics;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Field     ;
+                Name=TotalContractsControl;
+                CaptionML=ENU=Total Contracts;
+                SourceExpr=TotalContracts;
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              DrillDownTotalContracts("No.");
+                            END;
+                             }
+
+    { 3   ;1   ;Field     ;
+                Name=TotalPaymentsControl;
+                CaptionML=ENU=Total Payments;
+                SourceExpr=TotalPayments;
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              DrillDownTotalPayments("No.");
+                            END;
+                             }
+
+  }
+  CODE
+  {
+    VAR
+      TotalContracts@1000 : Decimal;
+      TotalPayments@1001 : Decimal;
+
+    LOCAL PROCEDURE CalculateCustomerTotals@2(VAR TotalCustomerContracts@1002 : Decimal;VAR TotalCustomerPayments@1003 : Decimal;CustomerNo@1001 : Code[20]);
+    VAR
+      LeaseContractHeader@1000 : Record 50500;
+    BEGIN
+      LeaseContractHeader.SETRANGE("Customer No.",CustomerNo);
+      IF LeaseContractHeader.FINDSET THEN
+        REPEAT
+          LeaseContractHeader.CALCFIELDS("Total Amount","Amount Paid");
+          TotalCustomerContracts += LeaseContractHeader."Total Amount";
+          TotalCustomerPayments += LeaseContractHeader."Amount Paid";
+        UNTIL LeaseContractHeader.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE DrillDownTotalContracts@1(CustomerNo@1000 : Code[20]);
+    VAR
+      LeaseContractHeader@1001 : Record 50500;
+      LeaseContractLine@1002 : Record 50501;
+      TempLeaseContractLine@1003 : TEMPORARY Record 50501;
+    BEGIN
+      LeaseContractHeader.SETRANGE("Customer No.",CustomerNo);
+      IF LeaseContractHeader.FINDSET THEN
+        REPEAT
+          LeaseContractLine.SETRANGE("Contract No.",LeaseContractHeader."No.");
+          IF LeaseContractLine.FINDSET THEN
+            REPEAT
+              TempLeaseContractLine := LeaseContractLine;
+              TempLeaseContractLine.INSERT;
+            UNTIL LeaseContractLine.NEXT = 0;
+        UNTIL LeaseContractHeader.NEXT = 0;
+
+      PAGE.RUN(0,TempLeaseContractLine);
+    END;
+
+    LOCAL PROCEDURE DrillDownTotalPayments@3(CustomerNo@1000 : Code[20]);
+    VAR
+      CustomerPayment@1001 : Record 50502;
+      CustomerPayments@1002 : Page 50507;
+    BEGIN
+      CustomerPayment.FILTERGROUP(2);
+      CustomerPayment.SETRANGE("Customer No.",CustomerNo);
+      CustomerPayment.FILTERGROUP(0);
+
+      CustomerPayments.SETTABLEVIEW(CustomerPayment);
+      CustomerPayments.LOOKUPMODE(TRUE);
+      CustomerPayments.EDITABLE(FALSE);
+      CustomerPayments.RUN;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

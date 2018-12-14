@@ -1,0 +1,293 @@
+OBJECT Codeunit 50504 Customer Payments Mgt.
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01.11.18;
+    Time=[ 0:47:43];
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      MissingPayTermsErr@1000 : TextConst 'ENU=To create an invoice, fill the payment terms code.';
+
+    PROCEDURE CalcNextPaymentDate@6(ContractNo@1000 : Code[20];AtDate@1005 : Date) : Date;
+    VAR
+      LeaseContractHeader@1001 : Record 50500;
+      ContractPaymentTerms@1002 : Record 50503;
+      PaymentDate@1004 : Date;
+      I@1003 : Integer;
+    BEGIN
+      LeaseContractHeader.GET(ContractNo);
+      IF AtDate > LeaseContractHeader."Ending Date" THEN
+        EXIT(0D);
+
+      IF NOT ContractPaymentTerms.GET(LeaseContractHeader."Payment Terms Code") THEN
+        EXIT(0D);
+
+      PaymentDate := LeaseContractHeader."Starting Date";
+      WHILE (PaymentDate <= LeaseContractHeader."Ending Date") AND (PaymentDate <= AtDate) DO
+        PaymentDate := CALCDATE(ContractPaymentTerms."Payment Date Formula",PaymentDate);
+
+      IF PaymentDate > LeaseContractHeader."Ending Date" THEN
+        PaymentDate := LeaseContractHeader."Ending Date";
+
+      EXIT(PaymentDate);
+    END;
+
+    PROCEDURE CreateSalesInvoices@1(VAR CustomerPayment@1000 : Record 50502);
+    VAR
+      SalesHeader@1001 : Record 36;
+      InvoiceLineNo@1002 : Integer;
+    BEGIN
+      CustomerPayment.SETCURRENTKEY("Customer No.","Payment Date","Journal Line Created");
+      CustomerPayment.SETRANGE("Journal Line Created",FALSE);
+      IF CustomerPayment.FINDSET THEN
+        REPEAT
+          IF (SalesHeader."Sell-to Customer No." <> CustomerPayment."Customer No.") OR
+             (SalesHeader."Document Date" <> CustomerPayment."Payment Date") THEN
+          BEGIN
+            CreateInvoiceHeader(SalesHeader,CustomerPayment);
+            InvoiceLineNo := 10000;
+          END;
+          CreateInvoiceLine(SalesHeader,CustomerPayment,InvoiceLineNo);
+        UNTIL CustomerPayment.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE CreateInvoiceHeader@2(VAR SalesHeader@1001 : Record 36;CustomerPayment@1000 : Record 50502);
+    BEGIN
+      SalesHeader.VALIDATE("Document Type",SalesHeader."Document Type"::Invoice);
+      SalesHeader.VALIDATE("Sell-to Customer No.",CustomerPayment."Customer No.");
+      SalesHeader.VALIDATE("Document Date",CustomerPayment."Payment Date");
+      SalesHeader.INSERT(TRUE);
+    END;
+
+    LOCAL PROCEDURE CreateInvoiceLine@3(SalesHeader@1001 : Record 36;CustomerPayment@1000 : Record 50502;VAR LineNo@1003 : Integer);
+    VAR
+      SalesLine@1002 : Record 37;
+      LeaseContractLine@1004 : Record 50501;
+    BEGIN
+      SalesLine.VALIDATE("Document Type",SalesHeader."Document Type");
+      SalesLine.VALIDATE("Document No.",SalesHeader."No.");
+      SalesLine.VALIDATE("Line No.",LineNo);
+
+      LeaseContractLine.GET(CustomerPayment."Contract No.",CustomerPayment."Contract Line No.");
+      SalesLine.VALIDATE(Type,SalesLine.Type::Item);
+      SalesLine.VALIDATE("No.",LeaseContractLine."Item No.");
+      SalesLine.VALIDATE(Quantity,1);
+      SalesLine.VALIDATE("Line Amount",CustomerPayment.Amount);
+      SalesLine.INSERT(TRUE);
+
+      LineNo += 10000;
+    END;
+
+    PROCEDURE CreatePaymentJournalLines@20(VAR CustomerPaymentFilter@1001 : Record 50502);
+    VAR
+      CustomerPayment@1000 : Record 50502;
+    BEGIN
+      CustomerPayment.COPYFILTERS(CustomerPaymentFilter);
+      CustomerPayment.SETRANGE("Journal Line Created",FALSE);
+      IF CustomerPayment.FINDSET THEN
+        REPEAT
+          CreatePaymentJournalLine(CustomerPayment);
+        UNTIL CustomerPayment.NEXT = 0;
+
+      CustomerPayment.MODIFYALL("Journal Line Created",TRUE);
+    END;
+
+    LOCAL PROCEDURE CreatePaymentJournalLine@18(CustomerPayment@1001 : Record 50502);
+    VAR
+      GenJournalLine@1000 : Record 81;
+    BEGIN
+      // TODO: Function is an example form the chapter on XMLPorts
+      OnAfterCreatePaymentJnlLine(GenJournalLine);
+    END;
+
+    PROCEDURE CreateSalesInvoice@13(VAR LeaseContractHeader@1000 : Record 50500);
+    VAR
+      SalesHeader@1001 : Record 36;
+    BEGIN
+      IF LeaseContractHeader."Invoice No." = '' THEN
+        EXIT;
+
+      OnBeforeCreateInvoice(LeaseContractHeader);
+      CreateSalesInvoiceHeader(SalesHeader,LeaseContractHeader);
+      CreateSalesInvoiceLines(SalesHeader,LeaseContractHeader."No.");
+      OnAfterCreateInvoice(LeaseContractHeader,SalesHeader);
+
+      LeaseContractHeader.VALIDATE("Invoice No.",SalesHeader."No.");
+      LeaseContractHeader.MODIFY(TRUE);
+    END;
+
+    PROCEDURE CreateSalesInvoiceHeader@11(VAR SalesHeader@1002 : Record 36;VAR LeaseContractHeader@1000 : Record 50500);
+    VAR
+      ContractPaymentTerms@1001 : Record 50503;
+    BEGIN
+      IF NOT ContractPaymentTerms.GET(LeaseContractHeader."Payment Terms Code") THEN
+        ERROR(MissingPayTermsErr);
+
+      SalesHeader.VALIDATE("Document Type",SalesHeader."Document Type"::Invoice);
+      SalesHeader.VALIDATE("Sell-to Customer No.",LeaseContractHeader."Customer No.");
+
+      IF LeaseContractHeader."Last Invoice Date" = 0D THEN
+        SalesHeader.VALIDATE("Document Date",LeaseContractHeader."Starting Date")
+      ELSE
+        SalesHeader.VALIDATE(
+          "Document Date",CALCDATE(ContractPaymentTerms."Payment Date Formula",LeaseContractHeader."Last Invoice Date"));
+      SalesHeader.VALIDATE("Posting Date",SalesHeader."Document Date");
+      SalesHeader.INSERT(TRUE);
+
+      LeaseContractHeader.VALIDATE("Last Invoice Date",SalesHeader."Document Date");
+      LeaseContractHeader.MODIFY(TRUE);
+    END;
+
+    PROCEDURE CreateSalesInvoiceLines@10(SalesHeader@1001 : Record 36;ContractNo@1000 : Code[20]);
+    VAR
+      SalesLine@1002 : Record 37;
+      LeaseContractLine@1004 : Record 50501;
+      LineNo@1003 : Integer;
+    BEGIN
+      SalesLine.VALIDATE("Document Type",SalesHeader."Document Type");
+      SalesLine.VALIDATE("Document No.",SalesHeader."No.");
+      SalesLine.VALIDATE("Line No.",LineNo);
+
+      LeaseContractLine.SETRANGE("Contract No.",ContractNo);
+      IF LeaseContractLine.FINDSET THEN
+        REPEAT
+          OnBeforeCreateInvoiceLine(LeaseContractLine);
+          LineNo += 10000;
+          SalesLine.VALIDATE(Type,SalesLine.Type::Item);
+          SalesLine.VALIDATE("No.",LeaseContractLine."Item No.");
+          SalesLine.VALIDATE(Quantity,1);
+          SalesLine.VALIDATE("Line Amount",LeaseContractLine.Amount);
+          SalesLine.INSERT(TRUE);
+          OnAfterCreateInvoiceLine(LeaseContractLine,SalesLine);
+        UNTIL LeaseContractLine.NEXT = 0;
+    END;
+
+    PROCEDURE CalculateAmountPaidAtDate@4(VAR LeaseContractHeader@1000 : Record 50500;AsOfDate@1002 : Date) : Decimal;
+    VAR
+      LeaseContractLine@1003 : Record 50501;
+      CustomerPayment@1001 : Record 50502;
+      AmountPaid@1004 : Decimal;
+    BEGIN
+      CustomerPayment.SETRANGE("Contract No.",LeaseContractHeader."No.");
+      IF AsOfDate <> 0D THEN
+        CustomerPayment.SETFILTER("Payment Date",'<=%1',AsOfDate);
+      LeaseContractLine.COPYFILTER("Item No.",LeaseContractHeader."Item No. Filter");
+      IF LeaseContractLine.FINDSET THEN
+        REPEAT
+          CustomerPayment.SETRANGE("Contract Line No.",LeaseContractLine."Line No.");
+          CustomerPayment.CALCSUMS(Amount);
+          AmountPaid += CustomerPayment.Amount;
+        UNTIL LeaseContractLine.NEXT = 0;
+
+      EXIT(AmountPaid);
+    END;
+
+    LOCAL PROCEDURE ContractLinePaymentsExist@5(ContractNo@1001 : Code[20];ContractLineNo@1002 : Integer) : Boolean;
+    VAR
+      CustomerPayment@1000 : Record 50502;
+    BEGIN
+      CustomerPayment.SETRANGE("Contract No.",ContractNo);
+      CustomerPayment.SETRANGE("Contract Line No.",ContractLineNo);
+      CustomerPayment.SETRANGE("Journal Line Posted",FALSE);
+      EXIT(NOT CustomerPayment.ISEMPTY);
+    END;
+
+    PROCEDURE GetLinesCountToProcess@22(VAR CustomerPaymentFilter@1000 : Record 50502) : Integer;
+    VAR
+      CustomerPayment@1001 : Record 50502;
+    BEGIN
+      CustomerPayment.COPYFILTERS(CustomerPaymentFilter);
+      CustomerPayment.SETRANGE("Journal Line Created",FALSE);
+      EXIT(CustomerPayment.COUNT);
+    END;
+
+    PROCEDURE UnprocessedContractPaymentsExist@7(ContractNo@1000 : Code[20]) : Boolean;
+    VAR
+      CustomerPayment@1001 : Record 50502;
+    BEGIN
+      CustomerPayment.SETRANGE("Contract No.",ContractNo);
+      CustomerPayment.SETRANGE("Journal Line Posted",FALSE);
+      EXIT(NOT CustomerPayment.ISEMPTY);
+    END;
+
+    PROCEDURE UnprocessedCustomerPaymentsExist@12(CustomerNo@1000 : Code[20]) : Boolean;
+    VAR
+      LeaseContractHeader@1001 : Record 50500;
+    BEGIN
+      LeaseContractHeader.SETRANGE("Customer No.",CustomerNo);
+      IF LeaseContractHeader.FINDSET THEN
+        REPEAT
+          IF UnprocessedContractPaymentsExist(LeaseContractHeader."No.") THEN
+            EXIT(TRUE);
+        UNTIL LeaseContractHeader.NEXT = 0;
+
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE UnpaidCustomerContractsExist@15(CustomerNo@1000 : Code[20]) : Boolean;
+    VAR
+      LeaseContractHeader@1001 : Record 50500;
+    BEGIN
+      LeaseContractHeader.SETRANGE("Customer No.",CustomerNo);
+      IF LeaseContractHeader.FINDSET THEN
+        REPEAT
+          LeaseContractHeader.CALCFIELDS("Total Amount");
+          IF CalculateAmountPaidAtDate(LeaseContractHeader,0D) < LeaseContractHeader."Total Amount" THEN
+            EXIT(TRUE);
+        UNTIL LeaseContractHeader.NEXT = 0;
+
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE FindLastCustomerPaymentDate@9(ContractNo@1001 : Code[20]) : Date;
+    VAR
+      CustomerPayment@1000 : Record 50502;
+    BEGIN
+      CustomerPayment.SETCURRENTKEY("Contract No.","Payment Date");
+      CustomerPayment.SETRANGE("Contract No.",ContractNo);
+      IF CustomerPayment.FINDLAST THEN
+        EXIT(CustomerPayment."Payment Date");
+
+      EXIT(0D);
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnBeforeCreateInvoice@8(LeaseContractHeader@1000 : Record 50500);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnAfterCreateInvoice@14(LeaseContractHeader@1000 : Record 50500;SalesHeader@1001 : Record 36);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnBeforeCreateInvoiceLine@16(LeaseContractLine@1000 : Record 50501);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnAfterCreateInvoiceLine@17(LeaseContractLine@1000 : Record 50501;SalesLine@1001 : Record 37);
+    BEGIN
+    END;
+
+    [Integration]
+    LOCAL PROCEDURE OnAfterCreatePaymentJnlLine@19(VAR GenJournalLine@1000 : Record 81);
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

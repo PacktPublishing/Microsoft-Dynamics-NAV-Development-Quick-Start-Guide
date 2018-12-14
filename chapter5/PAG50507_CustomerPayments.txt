@@ -1,0 +1,85 @@
+OBJECT Page 50507 Customer Payments
+{
+  OBJECT-PROPERTIES
+  {
+    Date=30.10.18;
+    Time=[ 0:30:37];
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50502;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 12      ;    ;ActionContainer;
+                      Name=PaymentJournal;
+                      CaptionML=ENU=Payment Journal;
+                      ActionContainerType=ActionItems }
+      { 13      ;1   ;Action    ;
+                      Name=CreateJnlLines;
+                      CaptionML=ENU=Create Journal Lines;
+                      OnAction=BEGIN
+                                 CreatePaymentJnlLines;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Contract No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Contract Line No." }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Payment Date" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Amount }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Global Dimension 1 Code" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Global Dimension 2 Code" }
+
+    { 9   ;2   ;Field     ;
+                SourceExpr="Customer Group Code" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Salesperson Code" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Customer No." }
+
+  }
+  CODE
+  {
+    VAR
+      CustomerPaymentsMgt@1000 : Codeunit 50504;
+      LeaseContractUIHandler@1001 : Codeunit 50516;
+
+    LOCAL PROCEDURE CreatePaymentJnlLines@1();
+    BEGIN
+      LeaseContractUIHandler.OpenLineCountWindow(CustomerPaymentsMgt.GetLinesCountToProcess(Rec),1);
+      BINDSUBSCRIPTION(LeaseContractUIHandler);
+      CustomerPaymentsMgt.CreatePaymentJournalLines(Rec);
+      UNBINDSUBSCRIPTION(LeaseContractUIHandler);
+      LeaseContractUIHandler.CloseLineCountWindow;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

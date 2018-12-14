@@ -1,0 +1,116 @@
+OBJECT Page 50507 Customer Payments
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12.11.18;
+    Time=[ 1:30:11];
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50502;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 12      ;    ;ActionContainer;
+                      Name=PaymentJournal;
+                      CaptionML=ENU=Payment Journal;
+                      ActionContainerType=ActionItems }
+      { 13      ;1   ;Action    ;
+                      Name=CreateJnlLines;
+                      CaptionML=ENU=Create Journal Lines;
+                      OnAction=BEGIN
+                                 CreatePaymentJnlLines;
+                               END;
+                                }
+      { 14      ;1   ;Action    ;
+                      Name=ImportPayments;
+                      CaptionML=ENU=Import payments;
+                      OnAction=BEGIN
+                                 IF ImportPayments THEN
+                                   MESSAGE(PaymentsImportedMsg)
+                                 ELSE
+                                   MESSAGE(ImportFailedErr);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Contract No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Contract Line No." }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Payment Date" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Amount }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Global Dimension 1 Code" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Global Dimension 2 Code" }
+
+    { 9   ;2   ;Field     ;
+                SourceExpr="Customer Group Code" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Salesperson Code" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Customer No." }
+
+  }
+  CODE
+  {
+    VAR
+      CustomerPaymentsMgt@1000 : Codeunit 50504;
+      LeaseContractUIHandler@1001 : Codeunit 50516;
+      PaymentsImportedMsg@1002 : TextConst 'ENU=Payments imported successfully';
+      ImportFailedErr@1003 : TextConst 'ENU=Could not import file';
+
+    LOCAL PROCEDURE CreatePaymentJnlLines@1();
+    BEGIN
+      LeaseContractUIHandler.OpenLineCountWindow(CustomerPaymentsMgt.GetLinesCountToProcess(Rec),1);
+      BINDSUBSCRIPTION(LeaseContractUIHandler);
+      CustomerPaymentsMgt.CreatePaymentJournalLines(Rec);
+      UNBINDSUBSCRIPTION(LeaseContractUIHandler);
+      LeaseContractUIHandler.CloseLineCountWindow;
+    END;
+
+    LOCAL PROCEDURE ImportPayments@2() : Boolean;
+    VAR
+      FileManagement@1001 : Codeunit 419;
+      ImportCustomerPayments@1000 : XMLport 50500;
+      FileStream@1002 : InStream;
+      InFile@1003 : File;
+      FileName@1004 : Text;
+    BEGIN
+      FileName := FileManagement.OpenFileDialog('Import customer payments','','xml|*.xml');
+      IF FileName = '' THEN
+        ERROR('');
+
+      InFile.OPEN(FileName);
+      InFile.CREATEINSTREAM(FileStream);
+
+      ImportCustomerPayments.SETSOURCE(FileStream);
+      EXIT(ImportCustomerPayments.IMPORT);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,153 @@
+OBJECT XMLport 50501 Import Customer Payments CSV
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10.11.18;
+    Time=23:48:55;
+    Modified=Yes;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    OnPreXMLport=BEGIN
+                   EntryNo := FindLastPaymentEntryNo;
+                 END;
+
+    Format=Variable Text;
+    FieldSeparator=[;];
+  }
+  ELEMENTS
+  {
+    { [{80269054-17F7-4697-AA61-6642E6653AE6}];  ;root                ;Element ;Text     }
+
+    { [{440934EF-C5A5-47E9-AD65-41603944AF75}];1 ;CustomerPayment     ;Element ;Table   ;
+                                                  SourceTable=Table50502;
+                                                  Import::OnBeforeInsertRecord=BEGIN
+                                                                                 MakeCorrectionIfPaymentExists("Customer Payment"."Contract No.","Customer Payment"."Contract Line No.","Customer Payment"."Payment Date");
+                                                                                 "Customer Payment"."Entry No." := EntryNo;
+                                                                                 EntryNo += 1;
+                                                                               END;
+                                                                                }
+
+    { [{C4356CE2-894F-49D1-ABFC-18CD12101F53}];2 ;ContractNo          ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Contract No. }
+
+    { [{B357F538-6BC4-4858-A169-C749BFCFB8AB}];2 ;ContractLineNo      ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Customer Payment::Contract Line No. }
+
+    { [{E2517C89-ED15-4674-9A13-0D3DB9630859}];2 ;PaymentDate         ;Element ;Field   ;
+                                                  DataType=Date;
+                                                  SourceField=Customer Payment::Payment Date }
+
+    { [{6BB84679-3754-40D8-A3AF-2A7795783A1D}];2 ;Amount              ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Customer Payment::Amount }
+
+    { [{DB040E74-112E-49FB-AF6C-F99CA7DD8B1E}];2 ;DepartmentCode      ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Global Dimension 1 Code }
+
+    { [{FC7552FE-CB9E-4F26-A945-4685BCD8194E}];2 ;ProjectCode         ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Global Dimension 2 Code }
+
+    { [{52CD5594-8BF3-42B0-83A7-472D9FF46AD4}];2 ;CustomerGroupCode   ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Customer Group Code }
+
+    { [{31B08C72-06BE-4E86-8FEF-1AB8E3C720EC}];2 ;SalesPersonCode     ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Salesperson Code }
+
+    { [{0C1F8163-3A82-4805-9051-25F525925787}];2 ;CustomerNo          ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Customer No. }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      EntryNo@1000 : Integer;
+
+    LOCAL PROCEDURE DeletePaymentJournalLine@6(VAR CustomerPayment@1000 : Record 50502);
+    VAR
+      GenJournalLine@1001 : Record 81;
+      CustPaymentGenJnlLine@1002 : Record 50504;
+    BEGIN
+      CustPaymentGenJnlLine.GET(CustomerPayment."Entry No.");
+      GenJournalLine.GET(
+        CustPaymentGenJnlLine."Gen. Jnl. Template Name",CustPaymentGenJnlLine."Gen. Jnl. Batch Name",
+        CustPaymentGenJnlLine."Gen. Journal Line No.");
+      GenJournalLine.DELETE(TRUE);
+    END;
+
+    LOCAL PROCEDURE FindCustomerPayment@3(VAR CustomerPayment@1001 : Record 50502;ContractNo@1000 : Code[20];ContractLineNo@1002 : Integer;PaymentDate@1003 : Date) : Boolean;
+    BEGIN
+      CustomerPayment.SETRANGE("Contract No.",ContractNo);
+      CustomerPayment.SETRANGE("Contract Line No.",ContractLineNo);
+      CustomerPayment.SETRANGE("Payment Date",PaymentDate);
+      CustomerPayment.SETRANGE(Corrected,FALSE);
+      EXIT(CustomerPayment.FINDLAST);
+    END;
+
+    LOCAL PROCEDURE FindLastPaymentEntryNo@1() : Integer;
+    VAR
+      CustomerPayment@1000 : Record 50502;
+    BEGIN
+      IF CustomerPayment.FINDLAST THEN;
+      EntryNo := CustomerPayment."Entry No." + 1;
+    END;
+
+    LOCAL PROCEDURE InsertCorrectivePaymentEntry@2(CustomerPayment@1000 : Record 50502);
+    VAR
+      CorrCustomerPayment@1001 : Record 50502;
+    BEGIN
+      CorrCustomerPayment := CustomerPayment;
+      CorrCustomerPayment.VALIDATE("Entry No.",EntryNo);
+      CorrCustomerPayment.VALIDATE(Amount,-CustomerPayment.Amount);
+      CorrCustomerPayment.INSERT(TRUE);
+
+      EntryNo += 1;
+    END;
+
+    LOCAL PROCEDURE MakeCorrectionIfPaymentExists@5(ContractNo@1004 : Code[20];ContractLineNo@1003 : Integer;PaymentDate@1002 : Date);
+    VAR
+      CustomerPayment@1001 : Record 50502;
+    BEGIN
+      IF FindCustomerPayment(CustomerPayment,ContractNo,ContractLineNo,PaymentDate) THEN
+        IF CustomerPayment."Journal Line Created" THEN
+          IF CustomerPayment."Journal Line Posted" THEN
+            InsertCorrectivePaymentEntry(CustomerPayment)
+          ELSE BEGIN
+            DeletePaymentJournalLine(CustomerPayment);
+            SetPaymentCorrectionMark(CustomerPayment);
+          END
+        ELSE
+          SetPaymentCorrectionMark(CustomerPayment);
+    END;
+
+    LOCAL PROCEDURE SetPaymentCorrectionMark@7(VAR CustomerPayment@1000 : Record 50502);
+    BEGIN
+      CustomerPayment.VALIDATE(Corrected,TRUE);
+      CustomerPayment.MODIFY(TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+
