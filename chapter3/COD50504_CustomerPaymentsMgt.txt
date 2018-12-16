@@ -2,9 +2,8 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
 {
   OBJECT-PROPERTIES
   {
-    Date=28.09.18;
-    Time=[ 0:53:38];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES

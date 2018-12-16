@@ -1,17 +1,16 @@
-OBJECT XMLport 50503 Export Customer Payments XML
+OBJECT XMLport 50501 Import Customer Payments XML
 {
   OBJECT-PROPERTIES
   {
-    Date=11.11.18;
-    Time=22:52:16;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
   {
-    Direction=Export;
+    Direction=Import;
     OnPreXMLport=BEGIN
-                   EntryNo := FindLastPaymentEntryNo;
+                   EntryNo := FindNextPaymentEntryNo;
                  END;
 
     Format=Xml;
@@ -21,28 +20,18 @@ OBJECT XMLport 50503 Export Customer Payments XML
   {
     { [{80269054-17F7-4697-AA61-6642E6653AE6}];  ;Payments            ;Element ;Text     }
 
-    { [{DC2873E6-C0E0-451F-9777-A0F0E66F71A0}];1 ;BankAccount         ;Element ;Table   ;
-                                                  SourceTable=Table270;
-                                                  Export::OnAfterGetRecord=VAR
-                                                                             CustomerPayment@1000 : Record 50502;
-                                                                           BEGIN
-                                                                             CustomerPayment.SETRANGE("Bank Account No.","Bank Account"."No.");
-                                                                             IF CustomerPayment.ISEMPTY THEN
-                                                                               currXMLport.SKIP;
-                                                                           END;
-                                                                            }
+    { [{DC2873E6-C0E0-451F-9777-A0F0E66F71A0}];1 ;BankAccount         ;Element ;Text     }
 
-    { [{616A6A23-6EDC-406C-8BE5-7FB5D9C31CCF}];2 ;AccountNo           ;Attribute;Field  ;
-                                                  DataType=Code;
-                                                  SourceField=Bank Account::No. }
+    { [{616A6A23-6EDC-406C-8BE5-7FB5D9C31CCF}];2 ;AccountNo           ;Attribute;Text   ;
+                                                  VariableName=BankAccountNo }
 
     { [{440934EF-C5A5-47E9-AD65-41603944AF75}];2 ;CustomerPayment     ;Element ;Table   ;
                                                   SourceTable=Table50502;
-                                                  LinkFields=Field14=FIELD(Field1);
-                                                  LinkTable=Bank Account;
                                                   Import::OnBeforeInsertRecord=BEGIN
-                                                                                 MakeCorrectionIfPaymentExists("Customer Payment"."Contract No.","Customer Payment"."Contract Line No.","Customer Payment"."Payment Date");
+                                                                                 "Customer Payment"."Bank Account No." := BankAccountNo;
                                                                                  "Customer Payment"."Entry No." := EntryNo;
+
+                                                                                 MakeCorrectionIfPaymentExists("Customer Payment"."Contract No.","Customer Payment"."Contract Line No.","Customer Payment"."Payment Date");
                                                                                  EntryNo += 1;
                                                                                END;
                                                                                 }
@@ -106,11 +95,12 @@ OBJECT XMLport 50503 Export Customer Payments XML
       GenJournalLine@1001 : Record 81;
       CustPaymentGenJnlLine@1002 : Record 50504;
     BEGIN
-      CustPaymentGenJnlLine.GET(CustomerPayment."Entry No.");
-      GenJournalLine.GET(
-        CustPaymentGenJnlLine."Gen. Jnl. Template Name",CustPaymentGenJnlLine."Gen. Jnl. Batch Name",
-        CustPaymentGenJnlLine."Gen. Journal Line No.");
-      GenJournalLine.DELETE(TRUE);
+      IF CustPaymentGenJnlLine.GET(CustomerPayment."Entry No.") THEN
+        IF GenJournalLine.GET(
+           CustPaymentGenJnlLine."Gen. Jnl. Template Name",CustPaymentGenJnlLine."Gen. Jnl. Batch Name",
+           CustPaymentGenJnlLine."Gen. Jnl. Line No.")
+        THEN
+          GenJournalLine.DELETE(TRUE);
     END;
 
     LOCAL PROCEDURE FindCustomerPayment@3(VAR CustomerPayment@1001 : Record 50502;ContractNo@1000 : Code[20];ContractLineNo@1002 : Integer;PaymentDate@1003 : Date) : Boolean;
@@ -122,12 +112,14 @@ OBJECT XMLport 50503 Export Customer Payments XML
       EXIT(CustomerPayment.FINDLAST);
     END;
 
-    LOCAL PROCEDURE FindLastPaymentEntryNo@1() : Integer;
+    LOCAL PROCEDURE FindNextPaymentEntryNo@1() : Integer;
     VAR
       CustomerPayment@1000 : Record 50502;
     BEGIN
-      IF CustomerPayment.FINDLAST THEN;
-      EntryNo := CustomerPayment."Entry No." + 1;
+      IF CustomerPayment.FINDLAST THEN
+        EXIT(CustomerPayment."Entry No." + 1);
+
+      EXIT(1);
     END;
 
     LOCAL PROCEDURE InsertCorrectivePaymentEntry@2(CustomerPayment@1000 : Record 50502);

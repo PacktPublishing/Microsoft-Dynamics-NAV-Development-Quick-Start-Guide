@@ -2,10 +2,9 @@ OBJECT XMLport 50508 Export Lease Contracts
 {
   OBJECT-PROPERTIES
   {
-    Date=11.11.18;
-    Time=22:19:55;
-    Modified=Yes;
-    Version List=;
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
   }
   PROPERTIES
   {

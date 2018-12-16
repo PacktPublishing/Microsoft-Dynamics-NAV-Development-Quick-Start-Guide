@@ -1,0 +1,40 @@
+OBJECT Page 50502 Contract Payment Terms Card
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50503;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=General;
+                GroupType=Group }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Payment Terms Code" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Description }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Payment Date Formula" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

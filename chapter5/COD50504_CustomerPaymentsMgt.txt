@@ -2,9 +2,8 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
 {
   OBJECT-PROPERTIES
   {
-    Date=01.11.18;
-    Time=[ 0:47:43];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -104,9 +103,36 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
 
     LOCAL PROCEDURE CreatePaymentJournalLine@18(CustomerPayment@1001 : Record 50502);
     VAR
+      LeaseContractSetup@1002 : Record 50505;
       GenJournalLine@1000 : Record 81;
+      BankAccount@1003 : Record 270;
+      GenJournalTemplate@1004 : Record 80;
+      NoSeriesManagement@1005 : Codeunit 396;
     BEGIN
-      // TODO: Function is an example form the chapter on XMLPorts
+      LeaseContractSetup.GET;
+
+      WITH GenJournalLine DO BEGIN
+        VALIDATE("Journal Template Name",LeaseContractSetup."Cust. Payment Jnl. Template");
+        VALIDATE("Journal Batch Name",LeaseContractSetup."Cust. Payment Jnl. Batch");
+        SETRANGE("Journal Template Name",LeaseContractSetup."Cust. Payment Jnl. Template");
+        SETRANGE("Journal Batch Name",LeaseContractSetup."Cust. Payment Jnl. Batch");
+        IF FINDLAST THEN;
+        "Line No." += 10000;
+
+        GenJournalTemplate.GET("Journal Template Name");
+        BankAccount.GET(CustomerPayment."Bank Account No.");
+        VALIDATE("Posting Date",CustomerPayment."Payment Date");
+        VALIDATE("Document Type","Document Type"::Payment);
+        VALIDATE("Document No.",NoSeriesManagement.GetNextNo(GenJournalTemplate."No. Series","Posting Date",TRUE));
+        VALIDATE("Account Type","Account Type"::Customer);
+        VALIDATE("Account No.",CustomerPayment."Customer No.");
+        VALIDATE("Bal. Account Type","Bal. Account Type"::"Bank Account");
+        VALIDATE("Bal. Account No.",CustomerPayment."Bank Account No.");
+        VALIDATE("Currency Code",BankAccount."Currency Code");
+        VALIDATE(Amount,CustomerPayment.Amount);
+        INSERT(TRUE);
+      END;
+
       OnAfterCreatePaymentJnlLine(GenJournalLine);
     END;
 

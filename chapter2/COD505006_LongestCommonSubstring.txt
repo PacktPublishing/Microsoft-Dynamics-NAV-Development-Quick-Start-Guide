@@ -9,14 +9,14 @@ OBJECT Codeunit 50506 Longest Common Substring
   PROPERTIES
   {
     OnRun=BEGIN
-            MESSAGE(FindLongestCommonSubstring('message','glissade'));
+            MESSAGE(FindLongestCommonSubstring('collaboration','laboratory'));
           END;
 
   }
   CODE
   {
 
-    LOCAL PROCEDURE FindLongestCommonSubstring@1(S1@1000 : Text[100];S2@1001 : Text[100]) Res : Text;
+    LOCAL PROCEDURE FindLongestCommonSubstring@1(S1@1000 : Text[100];S2@1001 : Text[100]) Substring : Text;
     VAR
       Length@1002 : ARRAY [100,100] OF Integer;
       Longest@1003 : Integer;
@@ -33,12 +33,11 @@ OBJECT Codeunit 50506 Longest Common Substring
 
             IF Length[I,J] > Longest THEN BEGIN
               Longest := Length[I,J];
-              Res := COPYSTR(S1,I - Longest + 1,Longest);
-            END
-            ELSE IF Length[I,J] = Longest THEN
-              Res := Res + COPYSTR(S1,I - Longest + 1,Longest);
-          END
-          ELSE
+              Substring := COPYSTR(S1,I - Longest + 1,Longest);
+            END ELSE
+              IF Length[I,J] = Longest THEN
+              Substring := Substring + COPYSTR(S1,I - Longest + 1,Longest);
+          END ELSE
             Length[I,J] := 0;
     END;
 

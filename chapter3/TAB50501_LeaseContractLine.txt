@@ -2,9 +2,8 @@ OBJECT Table 50501 Lease Contract Line
 {
   OBJECT-PROPERTIES
   {
-    Date=03.10.18;
-    Time=23:37:35;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -16,8 +15,13 @@ OBJECT Table 50501 Lease Contract Line
   {
     { 1   ;   ;Contract No.        ;Code20        ;TableRelation="Lease Contract Header" }
     { 2   ;   ;Line No.            ;Integer        }
-    { 3   ;   ;Item No.            ;Code20        ;TableRelation=Item }
-    { 4   ;   ;Amount              ;Decimal       ;OnValidate=BEGIN
+    { 3   ;   ;Item No.            ;Code20        ;TableRelation=Item;
+                                                   OnValidate=BEGIN
+                                                                ValidateItemNo("Item No.");
+                                                              END;
+                                                               }
+    { 4   ;   ;Description         ;Text50         }
+    { 5   ;   ;Amount              ;Decimal       ;OnValidate=BEGIN
                                                                 TESTFIELD("Item No.");
                                                               END;
                                                                }
@@ -31,6 +35,15 @@ OBJECT Table 50501 Lease Contract Line
   }
   CODE
   {
+
+    LOCAL PROCEDURE ValidateItemNo@1(ItemNo@1000 : Code[20]) : Decimal;
+    VAR
+      Item@1001 : Record 27;
+    BEGIN
+      Item.GET(ItemNo);
+      VALIDATE(Amount,Item."Unit Price");
+      VALIDATE(Description,Item.Description);
+    END;
 
     BEGIN
     END.

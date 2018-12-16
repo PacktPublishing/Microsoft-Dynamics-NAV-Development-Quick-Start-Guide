@@ -2,9 +2,8 @@ OBJECT Page 50505 Lease Contract
 {
   OBJECT-PROPERTIES
   {
-    Date=12.11.18;
-    Time=[ 1:05:37];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES

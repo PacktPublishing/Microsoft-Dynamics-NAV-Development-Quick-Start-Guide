@@ -2,9 +2,8 @@ OBJECT Table 50500 Lease Contract Header
 {
   OBJECT-PROPERTIES
   {
-    Date=23.09.18;
-    Time=21:19:52;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -21,6 +20,14 @@ OBJECT Table 50500 Lease Contract Header
     OnDelete=VAR
                LeaseContractLine@1000 : Record 50501;
              BEGIN
+               IF CustomerPaymentsMgt.UnprocessedContractPaymentsExist("No.") THEN
+                 ERROR(UnprocessedPmtErr,"No.");
+
+               CALCFIELDS("Total Amount");
+               IF CustomerPaymentsMgt.CalculateAmountPaidAtDate(Rec,0D) < "Total Amount" THEN
+                 IF NOT CONFIRM(DeleteContractQst) THEN
+                   ERROR('');
+
                LeaseContractLine.SETRANGE("Contract No.","No.");
                LeaseContractLine.DELETEALL(TRUE);
              END;
@@ -49,14 +56,23 @@ OBJECT Table 50500 Lease Contract Header
                                                    NotBlank=Yes }
     { 5   ;   ;Total Amount        ;Decimal       ;FieldClass=FlowField;
                                                    CalcFormula=Sum("Lease Contract Line".Amount WHERE (Contract No.=FIELD(No.),
-                                                                                                       Item No.=FIELD(Item No. Filter))) }
-    { 6   ;   ;Item No. Filter     ;Code20        ;FieldClass=FlowFilter }
-    { 7   ;   ;Amount Paid         ;Decimal        }
+                                                                                                       Item No.=FIELD(Item No. Filter)));
+                                                   Editable=No }
+    { 6   ;   ;Item No. Filter     ;Code20        ;FieldClass=FlowFilter;
+                                                   TableRelation=Item }
+    { 7   ;   ;Amount Paid         ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Customer Payment".Amount WHERE (Contract No.=FIELD(No.)));
+                                                   Editable=No }
     { 8   ;   ;No. Series          ;Code10         }
+    { 9   ;   ;Payment Terms Code  ;Code20        ;TableRelation="Contract Payment Terms" }
+    { 10  ;   ;Last Invoice Date   ;Date           }
+    { 11  ;   ;Invoice No.         ;Code20         }
+    { 12  ;   ;Invoice Posted      ;Boolean        }
   }
   KEYS
   {
     {    ;No.                                     ;Clustered=Yes }
+    {    ;Invoice No.                              }
   }
   FIELDGROUPS
   {
@@ -67,13 +83,16 @@ OBJECT Table 50500 Lease Contract Header
       WrongStartEndDateErr@1000 : TextConst 'ENU=Starting date cannot be later than the ending date';
       SalesSetup@1001 : Record 311;
       NoSeriesMgt@1002 : Codeunit 396;
+      CustomerPaymentsMgt@1003 : Codeunit 50504;
+      DeleteContractQst@1004 : TextConst 'ENU=Contract is not completely paid. Do you want to delete it?';
+      UnprocessedPmtErr@1005 : TextConst 'ENU=Unprocessed payments exist for contract %1. Contract cannot be deleted.';
 
     LOCAL PROCEDURE ValidateDates@1();
     BEGIN
       IF ("Starting Date" = 0D) OR ("Ending Date" = 0D) THEN
         EXIT;
 
-      IF "Ending Date" > "Starting Date" THEN
+      IF "Ending Date" < "Starting Date" THEN
         ERROR(WrongStartEndDateErr);
     END;
 

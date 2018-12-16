@@ -92,7 +92,7 @@ OBJECT Page 50507 Customer Payments
     LOCAL PROCEDURE ImportPayments@2() : Boolean;
     VAR
       FileManagement@1001 : Codeunit 419;
-      ImportCustomerPayments@1000 : XMLport 50500;
+      ImportCustomerPayments@1000 : XMLport 50501;
       FileStream@1002 : InStream;
       InFile@1003 : File;
       FileName@1004 : Text;

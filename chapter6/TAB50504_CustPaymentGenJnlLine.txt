@@ -1,0 +1,33 @@
+OBJECT Table 50504 Cust. Payment - Gen. Jnl. Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Customer Payment Entry No.;Integer ;TableRelation="Customer Payment" }
+    { 2   ;   ;Gen. Jnl. Template Name;Code10     ;TableRelation="Gen. Journal Template" }
+    { 3   ;   ;Gen. Jnl. Batch Name;Code10        ;TableRelation="Gen. Journal Batch".Name WHERE (Journal Template Name=FIELD(Gen. Jnl. Template Name)) }
+    { 4   ;   ;Gen. Jnl. Line No.  ;Integer        }
+  }
+  KEYS
+  {
+    {    ;Customer Payment Entry No.              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -2,9 +2,8 @@ OBJECT Table 50500 Lease Contract Header
 {
   OBJECT-PROPERTIES
   {
-    Date=28.10.18;
-    Time=20:03:19;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -21,7 +20,7 @@ OBJECT Table 50500 Lease Contract Header
     OnDelete=VAR
                LeaseContractLine@1000 : Record 50501;
              BEGIN
-               IF CustomerPaymentsMgt.ContractPaymentsExist(Rec) THEN
+               IF CustomerPaymentsMgt.UnprocessedContractPaymentsExist("No.") THEN
                  ERROR(UnprocessedPmtErr,"No.");
 
                CALCFIELDS("Total Amount");

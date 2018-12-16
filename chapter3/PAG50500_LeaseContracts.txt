@@ -1,0 +1,47 @@
+OBJECT Page 50500 Lease Contracts
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50500;
+    PageType=List;
+    CardPageID=Lease Contract;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Customer No." }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Starting Date" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Ending Date" }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Total Amount" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,16 +1,15 @@
-OBJECT XMLport 50501 Import Customer Payments CSV
+OBJECT XMLport 50500 Import Customer Payments CSV
 {
   OBJECT-PROPERTIES
   {
-    Date=10.11.18;
-    Time=23:48:55;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
   {
     OnPreXMLport=BEGIN
-                   EntryNo := FindLastPaymentEntryNo;
+                   EntryNo := FindNextPaymentEntryNo;
                  END;
 
     Format=Variable Text;
@@ -65,6 +64,10 @@ OBJECT XMLport 50501 Import Customer Payments CSV
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Customer No. }
 
+    { [{888A9344-A173-4EBD-8596-BA1BB91D7BC2}];2 ;BankAccountNo       ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Customer Payment::Bank Account No. }
+
   }
   EVENTS
   {
@@ -91,7 +94,7 @@ OBJECT XMLport 50501 Import Customer Payments CSV
       CustPaymentGenJnlLine.GET(CustomerPayment."Entry No.");
       GenJournalLine.GET(
         CustPaymentGenJnlLine."Gen. Jnl. Template Name",CustPaymentGenJnlLine."Gen. Jnl. Batch Name",
-        CustPaymentGenJnlLine."Gen. Journal Line No.");
+        CustPaymentGenJnlLine."Gen. Jnl. Line No.");
       GenJournalLine.DELETE(TRUE);
     END;
 
@@ -104,7 +107,7 @@ OBJECT XMLport 50501 Import Customer Payments CSV
       EXIT(CustomerPayment.FINDLAST);
     END;
 
-    LOCAL PROCEDURE FindLastPaymentEntryNo@1() : Integer;
+    LOCAL PROCEDURE FindNextPaymentEntryNo@1() : Integer;
     VAR
       CustomerPayment@1000 : Record 50502;
     BEGIN

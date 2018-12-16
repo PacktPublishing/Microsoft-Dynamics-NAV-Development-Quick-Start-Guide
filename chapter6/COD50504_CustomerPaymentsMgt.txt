@@ -2,9 +2,8 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
 {
   OBJECT-PROPERTIES
   {
-    Date=15.11.18;
-    Time=[ 1:33:15];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -42,50 +41,28 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
       EXIT(PaymentDate);
     END;
 
-    PROCEDURE CreateSalesInvoices@1(VAR CustomerPayment@1000 : Record 50502);
+    PROCEDURE CalcPrevPaymentDate@23(ContractNo@1001 : Code[20];AtDate@1000 : Date) : Date;
     VAR
-      SalesHeader@1001 : Record 36;
-      InvoiceLineNo@1002 : Integer;
+      LeaseContractHeader@1006 : Record 50500;
+      ContractPaymentTerms@1005 : Record 50503;
+      PaymentDate@1004 : Date;
+      I@1003 : Integer;
+      PrevDate@1002 : Date;
     BEGIN
-      CustomerPayment.SETCURRENTKEY("Customer No.","Payment Date","Journal Line Created");
-      CustomerPayment.SETRANGE("Journal Line Created",FALSE);
-      IF CustomerPayment.FINDSET THEN
-        REPEAT
-          IF (SalesHeader."Sell-to Customer No." <> CustomerPayment."Customer No.") OR
-             (SalesHeader."Document Date" <> CustomerPayment."Payment Date") THEN
-          BEGIN
-            CreateInvoiceHeader(SalesHeader,CustomerPayment);
-            InvoiceLineNo := 10000;
-          END;
-          CreateInvoiceLine(SalesHeader,CustomerPayment,InvoiceLineNo);
-        UNTIL CustomerPayment.NEXT = 0;
-    END;
+      LeaseContractHeader.GET(ContractNo);
+      IF AtDate > LeaseContractHeader."Ending Date" THEN
+        EXIT(0D);
 
-    LOCAL PROCEDURE CreateInvoiceHeader@2(VAR SalesHeader@1001 : Record 36;CustomerPayment@1000 : Record 50502);
-    BEGIN
-      SalesHeader.VALIDATE("Document Type",SalesHeader."Document Type"::Invoice);
-      SalesHeader.VALIDATE("Sell-to Customer No.",CustomerPayment."Customer No.");
-      SalesHeader.VALIDATE("Document Date",CustomerPayment."Payment Date");
-      SalesHeader.INSERT(TRUE);
-    END;
+      IF NOT ContractPaymentTerms.GET(LeaseContractHeader."Payment Terms Code") THEN
+        EXIT(0D);
 
-    LOCAL PROCEDURE CreateInvoiceLine@3(SalesHeader@1001 : Record 36;CustomerPayment@1000 : Record 50502;VAR LineNo@1003 : Integer);
-    VAR
-      SalesLine@1002 : Record 37;
-      LeaseContractLine@1004 : Record 50501;
-    BEGIN
-      SalesLine.VALIDATE("Document Type",SalesHeader."Document Type");
-      SalesLine.VALIDATE("Document No.",SalesHeader."No.");
-      SalesLine.VALIDATE("Line No.",LineNo);
+      PaymentDate := LeaseContractHeader."Starting Date";
+      WHILE (PaymentDate <= LeaseContractHeader."Ending Date") AND (PaymentDate <= AtDate) DO BEGIN
+        PrevDate := PaymentDate;
+        PaymentDate := CALCDATE(ContractPaymentTerms."Payment Date Formula",PrevDate);
+      END;
 
-      LeaseContractLine.GET(CustomerPayment."Contract No.",CustomerPayment."Contract Line No.");
-      SalesLine.VALIDATE(Type,SalesLine.Type::Item);
-      SalesLine.VALIDATE("No.",LeaseContractLine."Item No.");
-      SalesLine.VALIDATE(Quantity,1);
-      SalesLine.VALIDATE("Line Amount",CustomerPayment.Amount);
-      SalesLine.INSERT(TRUE);
-
-      LineNo += 10000;
+      EXIT(PrevDate);
     END;
 
     PROCEDURE CreatePaymentJournalLines@20(VAR CustomerPaymentFilter@1001 : Record 50502);
@@ -141,7 +118,7 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
     VAR
       SalesHeader@1001 : Record 36;
     BEGIN
-      IF LeaseContractHeader."Invoice No." = '' THEN
+      IF LeaseContractHeader."Invoice No." <> '' THEN
         EXIT;
 
       OnBeforeCreateInvoice(LeaseContractHeader);
@@ -181,15 +158,15 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
       LeaseContractLine@1004 : Record 50501;
       LineNo@1003 : Integer;
     BEGIN
-      SalesLine.VALIDATE("Document Type",SalesHeader."Document Type");
-      SalesLine.VALIDATE("Document No.",SalesHeader."No.");
-      SalesLine.VALIDATE("Line No.",LineNo);
-
       LeaseContractLine.SETRANGE("Contract No.",ContractNo);
       IF LeaseContractLine.FINDSET THEN
         REPEAT
           OnBeforeCreateInvoiceLine(LeaseContractLine);
           LineNo += 10000;
+          SalesLine.INIT;
+          SalesLine.VALIDATE("Document Type",SalesHeader."Document Type");
+          SalesLine.VALIDATE("Document No.",SalesHeader."No.");
+          SalesLine.VALIDATE("Line No.",LineNo);
           SalesLine.VALIDATE(Type,SalesLine.Type::Item);
           SalesLine.VALIDATE("No.",LeaseContractLine."Item No.");
           SalesLine.VALIDATE(Quantity,1);
@@ -236,6 +213,18 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
       CustomerPayment.COPYFILTERS(CustomerPaymentFilter);
       CustomerPayment.SETRANGE("Journal Line Created",FALSE);
       EXIT(CustomerPayment.COUNT);
+    END;
+
+    PROCEDURE IsOverduePayment@21(ContractNo@1000 : Code[20]) : Boolean;
+    VAR
+      PrevScheduledDate@1001 : Date;
+      NextScheduledDate@1002 : Date;
+      LastPaymentDate@1003 : Date;
+    BEGIN
+      PrevScheduledDate := CalcPrevPaymentDate(ContractNo,WORKDATE);
+      NextScheduledDate := CalcNextPaymentDate(ContractNo,WORKDATE);
+      LastPaymentDate := FindLastCustomerPaymentDate(ContractNo);
+      EXIT(NOT ((LastPaymentDate > PrevScheduledDate) AND (LastPaymentDate <= NextScheduledDate)));
     END;
 
     PROCEDURE UnprocessedContractPaymentsExist@7(ContractNo@1000 : Code[20]) : Boolean;

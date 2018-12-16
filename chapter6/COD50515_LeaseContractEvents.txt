@@ -2,9 +2,8 @@ OBJECT Codeunit 50515 Lease Contract Events
 {
   OBJECT-PROPERTIES
   {
-    Date=03.11.18;
-    Time=20:35:10;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -16,7 +15,7 @@ OBJECT Codeunit 50515 Lease Contract Events
   CODE
   {
     VAR
-      ModifyNotAllowedErr@1000 : TextConst 'ENU=Invoice %1 was create from the contract %2. Invoice amount cannot be modified';
+      ModifyNotAllowedErr@1000 : TextConst 'ENU=Invoice %1 was created from the contract %2. Invoice amount cannot be modified';
       ConfirmPageCloseQst@1001 : TextConst 'ENU=Item unit price is not specified. Close the page anyway?';
       CustomerPaymentsMgt@1002 : Codeunit 50504;
       UnpaidContractErr@1003 : TextConst 'ENU=Unpaid contracts exist for customer %1.\Customer cannot be deleted.';
@@ -61,6 +60,7 @@ OBJECT Codeunit 50515 Lease Contract Events
       GLEntry@1002 : Record 17;
       GeneralLedgerEntries@1003 : Page 20;
     BEGIN
+      GLRegister.SETRANGE("User ID",USERID);
       IF GLRegister.FINDLAST THEN BEGIN
         GLEntry.SETRANGE("Entry No.",GLRegister."From Entry No.",GLRegister."To Entry No.");
         GeneralLedgerEntries.SETTABLEVIEW(GLEntry);
@@ -115,7 +115,7 @@ OBJECT Codeunit 50515 Lease Contract Events
       WITH CustPaymentGenJnlLine DO BEGIN
         SETRANGE("Gen. Jnl. Template Name",Rec."Journal Template Name");
         SETRANGE("Gen. Jnl. Batch Name",Rec."Journal Batch Name");
-        SETRANGE("Gen. Journal Line No.",Rec."Line No.");
+        SETRANGE("Gen. Jnl. Line No.",Rec."Line No.");
         IF FINDFIRST THEN BEGIN
           CustomerPayment.GET("Customer Payment Entry No.");
           CustomerPayment.VALIDATE("Journal Line Created",FALSE);
@@ -132,13 +132,13 @@ OBJECT Codeunit 50515 Lease Contract Events
       CustomerPayment@1003 : Record 50502;
       CustPaymentGenJnlLine@1004 : Record 50504;
     BEGIN
-      IF Rec."Document Type" <> Rec."Document Type"::Payment THEN
+      IF (Rec."Document Type" <> Rec."Document Type"::Payment) OR (Rec.Amount = xRec.Amount) THEN
         EXIT;
 
       WITH CustPaymentGenJnlLine DO BEGIN
         SETRANGE("Gen. Jnl. Template Name",Rec."Journal Template Name");
         SETRANGE("Gen. Jnl. Batch Name",Rec."Journal Batch Name");
-        SETRANGE("Gen. Journal Line No.",Rec."Line No.");
+        SETRANGE("Gen. Jnl. Line No.",Rec."Line No.");
         IF FINDFIRST THEN BEGIN
           CustomerPayment.GET("Customer Payment Entry No.");
           CustomerPayment.VALIDATE(Amount,Rec.Amount);
@@ -159,7 +159,7 @@ OBJECT Codeunit 50515 Lease Contract Events
       WITH CustPaymentGenJnlLine DO BEGIN
         SETRANGE("Gen. Jnl. Template Name",GenJournalLine."Journal Template Name");
         SETRANGE("Gen. Jnl. Batch Name",GenJournalLine."Journal Batch Name");
-        SETRANGE("Gen. Journal Line No.",GenJournalLine."Line No.");
+        SETRANGE("Gen. Jnl. Line No.",GenJournalLine."Line No.");
         IF FINDFIRST THEN BEGIN
           CustomerPayment.GET("Customer Payment Entry No.");
           CustomerPayment.VALIDATE("Journal Line Posted",TRUE);

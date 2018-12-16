@@ -2,9 +2,8 @@ OBJECT Page 50505 Lease Contract
 {
   OBJECT-PROPERTIES
   {
-    Date=11.10.18;
-    Time=22:59:27;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -19,14 +18,27 @@ OBJECT Page 50505 Lease Contract
     {
       { 15      ;    ;ActionContainer;
                       Name=Documents;
-                      ActionContainerType=NewDocumentItems }
+                      ActionContainerType=ActionItems }
       { 16      ;1   ;Action    ;
                       Name=CreateInvoice;
                       CaptionML=ENU=Create Invoice;
+                      Promoted=Yes;
+                      Image=CreateDocument;
+                      PromotedCategory=Process;
                       OnAction=VAR
                                  CustomerPaymentsMgt@1000 : Codeunit 50504;
                                BEGIN
                                  CustomerPaymentsMgt.CreateSalesInvoice(Rec);
+                               END;
+                                }
+      { 17      ;1   ;Action    ;
+                      Name=ExportContract;
+                      CaptionML=ENU=Export Contract;
+                      OnAction=BEGIN
+                                 IF ExportContract("No.") THEN
+                                   MESSAGE(ContractExportedMsg)
+                                 ELSE
+                                   MESSAGE(CouldNotWriteFileErr);
                                END;
                                 }
     }
@@ -90,6 +102,7 @@ OBJECT Page 50505 Lease Contract
                 ContainerType=FactBoxArea }
 
     { 13  ;1   ;Part      ;
+                CaptionML=ENU=Customer Statistics;
                 SubPageLink=No.=FIELD(Customer No.);
                 PagePartID=Page50506;
                 PartType=Page }
@@ -102,12 +115,39 @@ OBJECT Page 50505 Lease Contract
       LastPaymentDate@1000 : Date;
       NextPaymentDate@1001 : Date;
       OverduePayment@1002 : Boolean;
+      ContractExportedMsg@1005 : TextConst 'ENU=Contract was successfully exported';
+      CouldNotWriteFileErr@1006 : TextConst 'ENU=Could not write file';
 
     LOCAL PROCEDURE UpdatePaymentDates@1();
     BEGIN
       LastPaymentDate := CustomerPaymentsMgt.FindLastCustomerPaymentDate("No.");
       NextPaymentDate := CustomerPaymentsMgt.CalcNextPaymentDate("No.",WORKDATE);
       OverduePayment := CustomerPaymentsMgt.CalcNextPaymentDate("No.",LastPaymentDate) < WORKDATE;
+    END;
+
+    LOCAL PROCEDURE ExportContract@2(ContractNo@1000 : Code[20]) : Boolean;
+    VAR
+      LeaseContractHeader@1002 : Record 50500;
+      FileManagement@1003 : Codeunit 419;
+      ExportLeaseContracts@1001 : XMLport 50508;
+      FileStream@1004 : OutStream;
+      FileName@1005 : Text;
+      OutFile@1006 : File;
+    BEGIN
+      FileName := FileManagement.SaveFileDialog('Export contract','','xml|*.xml');
+      IF FileName = '' THEN
+        ERROR('');
+
+      IF EXISTS(FileName) THEN
+        ERASE(FileName);
+
+      OutFile.CREATE(FileName);
+      OutFile.CREATEOUTSTREAM(FileStream);
+
+      LeaseContractHeader.SETRANGE("No.",ContractNo);
+      ExportLeaseContracts.SETTABLEVIEW(LeaseContractHeader);
+      ExportLeaseContracts.SETDESTINATION(FileStream);
+      EXIT(ExportLeaseContracts.EXPORT);
     END;
 
     BEGIN

@@ -1,14 +1,14 @@
-OBJECT XMLport 50502 Import Customer Payments XML
+OBJECT XMLport 50503 Export Customer Payments XML
 {
   OBJECT-PROPERTIES
   {
-    Date=10.11.18;
-    Time=23:50:04;
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
   {
+    Direction=Export;
     OnPreXMLport=BEGIN
                    EntryNo := FindLastPaymentEntryNo;
                  END;
@@ -18,10 +18,28 @@ OBJECT XMLport 50502 Import Customer Payments XML
   }
   ELEMENTS
   {
-    { [{80269054-17F7-4697-AA61-6642E6653AE6}];  ;root                ;Element ;Text     }
+    { [{80269054-17F7-4697-AA61-6642E6653AE6}];  ;Payments            ;Element ;Text     }
 
-    { [{440934EF-C5A5-47E9-AD65-41603944AF75}];1 ;CustomerPayment     ;Element ;Table   ;
+    { [{DC2873E6-C0E0-451F-9777-A0F0E66F71A0}];1 ;BankAccount         ;Element ;Table   ;
+                                                  SourceTable=Table270;
+                                                  Export::OnAfterGetRecord=VAR
+                                                                             CustomerPayment@1000 : Record 50502;
+                                                                           BEGIN
+                                                                             CustomerPayment.SETRANGE("Bank Account No.","Bank Account"."No.");
+                                                                             IF CustomerPayment.ISEMPTY THEN
+                                                                               currXMLport.SKIP;
+                                                                           END;
+                                                                            }
+
+    { [{616A6A23-6EDC-406C-8BE5-7FB5D9C31CCF}];2 ;AccountNo           ;Attribute;Field  ;
+                                                  DataType=Code;
+                                                  SourceField=Bank Account::No. }
+
+    { [{440934EF-C5A5-47E9-AD65-41603944AF75}];2 ;CustomerPayment     ;Element ;Table   ;
                                                   SourceTable=Table50502;
+                                                  SourceTableView=SORTING(Field1);
+                                                  LinkFields=Field14=FIELD(Field1);
+                                                  LinkTable=Bank Account;
                                                   Import::OnBeforeInsertRecord=BEGIN
                                                                                  MakeCorrectionIfPaymentExists("Customer Payment"."Contract No.","Customer Payment"."Contract Line No.","Customer Payment"."Payment Date");
                                                                                  "Customer Payment"."Entry No." := EntryNo;
@@ -29,39 +47,39 @@ OBJECT XMLport 50502 Import Customer Payments XML
                                                                                END;
                                                                                 }
 
-    { [{C4356CE2-894F-49D1-ABFC-18CD12101F53}];2 ;ContractNo          ;Element ;Field   ;
+    { [{C4356CE2-894F-49D1-ABFC-18CD12101F53}];3 ;ContractNo          ;Element ;Field   ;
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Contract No. }
 
-    { [{B357F538-6BC4-4858-A169-C749BFCFB8AB}];2 ;ContractLineNo      ;Element ;Field   ;
+    { [{B357F538-6BC4-4858-A169-C749BFCFB8AB}];3 ;ContractLineNo      ;Element ;Field   ;
                                                   DataType=Integer;
                                                   SourceField=Customer Payment::Contract Line No. }
 
-    { [{E2517C89-ED15-4674-9A13-0D3DB9630859}];2 ;PaymentDate         ;Element ;Field   ;
+    { [{E2517C89-ED15-4674-9A13-0D3DB9630859}];3 ;PaymentDate         ;Element ;Field   ;
                                                   DataType=Date;
                                                   SourceField=Customer Payment::Payment Date }
 
-    { [{6BB84679-3754-40D8-A3AF-2A7795783A1D}];2 ;Amount              ;Element ;Field   ;
+    { [{6BB84679-3754-40D8-A3AF-2A7795783A1D}];3 ;Amount              ;Element ;Field   ;
                                                   DataType=Decimal;
                                                   SourceField=Customer Payment::Amount }
 
-    { [{DB040E74-112E-49FB-AF6C-F99CA7DD8B1E}];2 ;Dimention1Code      ;Element ;Field   ;
+    { [{DB040E74-112E-49FB-AF6C-F99CA7DD8B1E}];3 ;DepartmentCode      ;Element ;Field   ;
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Global Dimension 1 Code }
 
-    { [{FC7552FE-CB9E-4F26-A945-4685BCD8194E}];2 ;Dimension2Code      ;Element ;Field   ;
+    { [{FC7552FE-CB9E-4F26-A945-4685BCD8194E}];3 ;ProjectCode         ;Element ;Field   ;
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Global Dimension 2 Code }
 
-    { [{52CD5594-8BF3-42B0-83A7-472D9FF46AD4}];2 ;CustomerGroupCode   ;Element ;Field   ;
+    { [{52CD5594-8BF3-42B0-83A7-472D9FF46AD4}];3 ;CustomerGroupCode   ;Element ;Field   ;
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Customer Group Code }
 
-    { [{31B08C72-06BE-4E86-8FEF-1AB8E3C720EC}];2 ;SalesPersonCode     ;Element ;Field   ;
+    { [{31B08C72-06BE-4E86-8FEF-1AB8E3C720EC}];3 ;SalesPersonCode     ;Element ;Field   ;
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Salesperson Code }
 
-    { [{0C1F8163-3A82-4805-9051-25F525925787}];2 ;CustomerNo          ;Element ;Field   ;
+    { [{0C1F8163-3A82-4805-9051-25F525925787}];3 ;CustomerNo          ;Element ;Field   ;
                                                   DataType=Code;
                                                   SourceField=Customer Payment::Customer No. }
 
@@ -91,7 +109,7 @@ OBJECT XMLport 50502 Import Customer Payments XML
       CustPaymentGenJnlLine.GET(CustomerPayment."Entry No.");
       GenJournalLine.GET(
         CustPaymentGenJnlLine."Gen. Jnl. Template Name",CustPaymentGenJnlLine."Gen. Jnl. Batch Name",
-        CustPaymentGenJnlLine."Gen. Journal Line No.");
+        CustPaymentGenJnlLine."Gen. Jnl. Line No.");
       GenJournalLine.DELETE(TRUE);
     END;
 

@@ -2,13 +2,14 @@ OBJECT Table 50502 Customer Payment
 {
   OBJECT-PROPERTIES
   {
-    Date=23.08.18;
-    Time=[ 0:19:07];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
   {
+    LookupPageID=Page50507;
+    DrillDownPageID=Page50507;
   }
   FIELDS
   {
@@ -17,8 +18,8 @@ OBJECT Table 50502 Customer Payment
     { 3   ;   ;Contract Line No.   ;Integer        }
     { 4   ;   ;Payment Date        ;Date           }
     { 5   ;   ;Amount              ;Decimal        }
-    { 6   ;   ;Invoice Created     ;Boolean        }
-    { 7   ;   ;Invoice Posted      ;Boolean       ;Description=Advanced }
+    { 6   ;   ;Journal Line Created;Boolean        }
+    { 7   ;   ;Journal Line Posted ;Boolean       ;Description=Advanced }
     { 8   ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
                                                    CaptionML=ENU=Global Dimension 1 Code;
                                                    CaptionClass='1,1,1' }
@@ -43,17 +44,19 @@ OBJECT Table 50502 Customer Payment
                                                    OnLookup=VAR
                                                               NewValue@1000 : Code[20];
                                                             BEGIN
-                                                              IF LookupDimensionValue(NewValue,LookupOption::CustomerGroup) THEN
+                                                              IF LookupDimensionValue(NewValue,LookupOption::Salesperson) THEN
                                                                 "Salesperson Code" := NewValue;
                                                             END;
                                                              }
+    { 12  ;   ;Customer No.        ;Code20        ;TableRelation=Customer }
   }
   KEYS
   {
     {    ;Entry No.                               ;Clustered=Yes }
-    {    ;Contract No.,Payment Date,Invoice Created;
+    {    ;Contract No.,Payment Date,Journal Line Created;
                                                    SumIndexFields=Amount }
     {    ;Contract Line No.                       ;SumIndexFields=Amount }
+    {    ;Customer No.,Journal Line Posted         }
   }
   FIELDGROUPS
   {

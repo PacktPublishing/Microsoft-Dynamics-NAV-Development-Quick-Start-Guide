@@ -2,9 +2,8 @@ OBJECT Page 50507 Customer Payments
 {
   OBJECT-PROPERTIES
   {
-    Date=30.10.18;
-    Time=[ 0:30:37];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
@@ -22,6 +21,16 @@ OBJECT Page 50507 Customer Payments
                       CaptionML=ENU=Create Journal Lines;
                       OnAction=BEGIN
                                  CreatePaymentJnlLines;
+                               END;
+                                }
+      { 14      ;1   ;Action    ;
+                      Name=ImportPayments;
+                      CaptionML=ENU=Import payments;
+                      OnAction=BEGIN
+                                 IF ImportPayments THEN
+                                   MESSAGE(PaymentsImportedMsg)
+                                 ELSE
+                                   MESSAGE(ImportFailedErr);
                                END;
                                 }
     }
@@ -68,6 +77,8 @@ OBJECT Page 50507 Customer Payments
     VAR
       CustomerPaymentsMgt@1000 : Codeunit 50504;
       LeaseContractUIHandler@1001 : Codeunit 50516;
+      PaymentsImportedMsg@1002 : TextConst 'ENU=Payments imported successfully';
+      ImportFailedErr@1003 : TextConst 'ENU=Could not import file';
 
     LOCAL PROCEDURE CreatePaymentJnlLines@1();
     BEGIN
@@ -76,6 +87,25 @@ OBJECT Page 50507 Customer Payments
       CustomerPaymentsMgt.CreatePaymentJournalLines(Rec);
       UNBINDSUBSCRIPTION(LeaseContractUIHandler);
       LeaseContractUIHandler.CloseLineCountWindow;
+    END;
+
+    LOCAL PROCEDURE ImportPayments@2() : Boolean;
+    VAR
+      FileManagement@1001 : Codeunit 419;
+      ImportCustomerPayments@1000 : XMLport 50500;
+      FileStream@1002 : InStream;
+      InFile@1003 : File;
+      FileName@1004 : Text;
+    BEGIN
+      FileName := FileManagement.OpenFileDialog('Import customer payments','','xml|*.xml');
+      IF FileName = '' THEN
+        ERROR('');
+
+      InFile.OPEN(FileName);
+      InFile.CREATEINSTREAM(FileStream);
+
+      ImportCustomerPayments.SETSOURCE(FileStream);
+      EXIT(ImportCustomerPayments.IMPORT);
     END;
 
     BEGIN

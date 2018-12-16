@@ -1,0 +1,41 @@
+OBJECT Page 50504 Lease Contract Subform
+{
+  OBJECT-PROPERTIES
+  {
+    Date=;
+    Time=;
+    Version List=PACKT QSG;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50501;
+    PageType=ListPart;
+    AutoSplitKey=Yes;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Item No." }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Description }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr=Amount }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

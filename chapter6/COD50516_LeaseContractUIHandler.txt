@@ -2,9 +2,8 @@ OBJECT Codeunit 50516 Lease Contract UI Handler
 {
   OBJECT-PROPERTIES
   {
-    Date=30.10.18;
-    Time=[ 1:03:33];
-    Modified=Yes;
+    Date=;
+    Time=;
     Version List=PACKT QSG;
   }
   PROPERTIES
