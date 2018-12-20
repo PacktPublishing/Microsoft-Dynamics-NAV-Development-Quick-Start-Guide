@@ -14,26 +14,6 @@ OBJECT Codeunit 50504 Customer Payments Mgt.
   }
   CODE
   {
-
-    PROCEDURE CreateSalesInvoices@1(VAR CustomerPayment@1000 : Record 50502);
-    VAR
-      SalesHeader@1001 : Record 36;
-      InvoiceLineNo@1002 : Integer;
-    BEGIN
-      CustomerPayment.SETCURRENTKEY("Customer No.","Payment Date","Invoice Created");
-      CustomerPayment.SETRANGE("Invoice Created",FALSE);
-      IF CustomerPayment.FINDSET THEN
-        REPEAT
-          IF (SalesHeader."Sell-to Customer No." <> CustomerPayment."Customer No.") OR
-             (SalesHeader."Document Date" <> CustomerPayment."Payment Date") THEN
-          BEGIN
-            CreateInvoiceHeader(SalesHeader,CustomerPayment);
-            InvoiceLineNo := 10000;
-          END;
-          CreateInvoiceLine(SalesHeader,CustomerPayment,InvoiceLineNo);
-        UNTIL CustomerPayment.NEXT = 0;
-    END;
-
     LOCAL PROCEDURE CreateInvoiceHeader@2(VAR SalesHeader@1001 : Record 36;CustomerPayment@1000 : Record 50502);
     BEGIN
       SalesHeader.VALIDATE("Document Type",SalesHeader."Document Type"::Invoice);
