@@ -8,14 +8,15 @@ This is the code repository for [Microsoft Dynamics NAV Development Quick Start 
 
 ## What is this book about?
 Microsoft Dynamics NAV is an enterprise resource planning (ERP) software suite for organizations. The system offers specialized functionality for manufacturing, distribution, government, retail, and other industries. This book gets you started with its integrated development environment for solving problems by customizing business processes.
-This book covers the following exciting features: <First 5 What you'll learn points>
-* Learn how to manage users, groups, and permissions
-* Encrypt and decrypt disks with Linux Unified Key Setup /Luks
-* Setup SSH for remote access, and connect it to other nodes
-* Understand how to add, remove, and search for packages
-* Use NFS and Samba to share directories with other users
 
-If you feel this book is for you, get your [copy](https://www.amazon.com/dp/10DigitISBN) today!
+This book covers the following exciting features:
+* Manage NAV Server configuration with Microsoft Management Console
+* Manage NAV installation with the NAV Administration Shell
+* Create integration events and extend functionality via the NAV event model
+* Run XML Ports from C/AL code
+* Design reports and write client code in RDLC expressions
+
+If you feel this book is for you, get your [copy](https://www.amazon.com/dp/1789612764) today!
 
 <a href="https://www.packtpub.com/?utm_source=github&utm_medium=banner&utm_campaign=GitHubBanner"><img src="https://raw.githubusercontent.com/PacktPublishing/GitHub/master/GitHub.png" 
 alt="https://www.packtpub.com/" border="5" /></a>
@@ -26,37 +27,25 @@ All of the code is organized into folders. For example, Chapter02.
 
 The code will look like the following:
 ```
-if (test expression)
-{
-  Statement upon condition is true
-}
+OnRun()
+MESSAGE('Hello World'); 
 ```
 
 **Following is what you need for this book:**
-Copy and paste the Audience section from the EPIC.
+This book is for experienced NAV users who have an understanding of basic programming concepts. Familiarity with NAV development environment or its internal development language-C/AL is not expected.
 
 With the following software and hardware list you can run all code files present in the book (Chapter 1-15).
 
 ### Software and Hardware List
 
-| Chapter  | Software required                   | OS required                        |
-| -------- | ------------------------------------| -----------------------------------|
-| 1        | R version 3.3.0                     | Windows, Mac OS X, and Linux (Any) |
-| 2        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 3        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 4        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 5        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 6        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 7        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 8        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 9        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 10        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 11        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 12        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 13        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 14        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-| 15        | Rstudio Desktop 0.99.903            | Windows, Mac OS X, and Linux (Any) |
-
+| Chapter  | Software required                                                        | OS required                        |
+| -------- | ------------------------------------                                     | -----------------------------------|
+| 1-8      | Microsoft Dynamics NAV 2015 or higher Developer license is required      | Windows x64                        |
+| 1-8      | Microsoft SQL Server Express                                             | Windows x64                        |
+| 1-6      | Microsoft Dynamics NAV 2016 or higher                                    | Windows x64                        |
+| 7        | Microsoft Report Viewer                                                  | Windows x64                        |
+| 7        | Microsoft Visual Studio with MS SQL Server Data Tools                    | Windows x64                        |
+| 7        | Instead of Visual Studio, Microsoft SQL Server Report Builder can be used| Windows x64Mac                     | 
 
 We also provide a PDF file that has color images of the screenshots/diagrams used in this book. [Click here to download it](Graphics Bundle Link).
 
