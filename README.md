@@ -49,7 +49,7 @@ With the following software and hardware list you can run all code files present
 
 
 ### Related products <Paste books from the Other books you may enjoy section>
-* Microsoft Dynamics 365 Enterprise Edition - Financial Management (Third Edition) [[Packt]](https://www.packtpub.com/application-development/microsoft-dynamics-365-enterprise-edition-financial-management utm_source=Github&utm_medium=Repository&utm_campaign=9781788839297) [[Amazon]](https://www.amazon.com/dp/1788839293)
+* Microsoft Dynamics 365 Enterprise Edition - Financial Management (Third Edition) [[Packt]](https://www.packtpub.com/application-development/microsoft-dynamics-365-enterprise-edition-financial-management?utm_source=Github&utm_medium=Repository&utm_campaign=9781788839297) [[Amazon]](https://www.amazon.com/dp/1788839293)
 
 * Dynamics 365 Business Central Development Quick Start Guide [[Packt]](https://www.packtpub.com/business/dynamics-365-business-central-development-quick-start-guide?utm_source=Github&utm_medium=Repository&utm_campaign=9781789347463) [[Amazon]](https://www.amazon.com/dp/1789347467)
 
