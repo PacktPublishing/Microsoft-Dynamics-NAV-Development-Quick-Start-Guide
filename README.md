@@ -49,9 +49,9 @@ With the following software and hardware list you can run all code files present
 
 
 ### Related products <Paste books from the Other books you may enjoy section>
-* Linux: Powerful Server Administration [[Packt]](https://www.packtpub.com/networking-and-servers/linux-powerful-server-administration?utm_source=github&utm_medium=repository&utm_campaign=9781788293778) [[Amazon]](https://www.amazon.com/dp/1788293770)
+* Microsoft Dynamics 365 Enterprise Edition - Financial Management (Third Edition) [[Packt]](https://www.packtpub.com/application-development/microsoft-dynamics-365-enterprise-edition-financial-management utm_source=Github&utm_medium=Repository&utm_campaign=9781788839297) [[Amazon]](https://www.amazon.com/dp/1788839293)
 
-* Linux Device Drivers Development [[Packt]](https://www.packtpub.com/networking-and-servers/linux-device-drivers-development?utm_source=github&utm_medium=repository&utm_campaign=9781785280009) [[Amazon]](https://www.amazon.com/dp/1788293770)
+* Dynamics 365 Business Central Development Quick Start Guide [[Packt]](https://www.packtpub.com/networking-and-servers/linux-device-drivers-development?utm_source=github&utm_medium=repository&utm_campaign=9781785280009) [[Amazon]](https://www.amazon.com/dp/1788293770)
 
 ## Get to Know the Author(s)
 **Author Name**
