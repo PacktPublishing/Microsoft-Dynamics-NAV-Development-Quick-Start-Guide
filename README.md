@@ -4,11 +4,10 @@
 
 This is the code repository for [Microsoft Dynamics NAV Development Quick Start Guide](https://www.packtpub.com/application-development/microsoft-dynamics-nav-development-quick-start-guide?utm_source=Github&utm_medium=Repository&utm_campaign=9781789612769), published by Packt.
 
-**Subtitle from EPIC**
+**Get up and running with Microsoft Dynamics NAV**
 
 ## What is this book about?
-First Paragraph from the Long Description
-
+Microsoft Dynamics NAV is an enterprise resource planning (ERP) software suite for organizations. The system offers specialized functionality for manufacturing, distribution, government, retail, and other industries. This book gets you started with its integrated development environment for solving problems by customizing business processes.
 This book covers the following exciting features: <First 5 What you'll learn points>
 * Learn how to manage users, groups, and permissions
 * Encrypt and decrypt disks with Linux Unified Key Setup /Luks
