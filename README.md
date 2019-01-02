@@ -53,17 +53,12 @@ With the following software and hardware list you can run all code files present
 
 * Dynamics 365 Business Central Development Quick Start Guide [[Packt]](https://www.packtpub.com/business/dynamics-365-business-central-development-quick-start-guide?utm_source=Github&utm_medium=Repository&utm_campaign=9781789347463) [[Amazon]](https://www.amazon.com/dp/1789347467)
 
-## Get to Know the Author(s)
-**Author Name**
-Bio
-
-**Author Name**
-Bio
-
+## Get to Know the Author
+**Alexander Drogin**
+Alexander Drogin started working with Navision Attain version 3.01 in 2002 as a software developer at a consulting company. After seven years of development, he shifted his focus to end-user support. In 2012, he joined the Microsoft Russia development team as a software engineer in testing, and worked on NAV test automation and sustained engineering tasks. He currently works as a NAV technical architect for a Microsoft partner in Malta.
 
 ## Other books by the authors
-* [Mastering Linux Network Administration](https://www.packtpub.com/networking-and-servers/mastering-linux-network-administration?utm_source=github&utm_medium=repository&utm_campaign=9781784399597)
-* [Linux Mint Essentials](https://www.packtpub.com/networking-and-servers/linux-mint-essentials?utm_source=github&utm_medium=repository&utm_campaign=9781782168157)
+* [Extending Microsoft Dynamics NAV 2016 Cookbook](https://www.packtpub.com/application-development/extending-microsoft-dynamics-nav-2016-cookbook?utm_source=Github&utm_medium=Repository&utm_campaign=9781786460608)
 
 ### Suggestions and Feedback
 [Click here](https://docs.google.com/forms/d/e/1FAIpQLSdy7dATC6QmEL81FIUuymZ0Wy9vH1jHkvpY57OiMeKGqib_Ow/viewform) if you have any feedback or suggestions.
