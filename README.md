@@ -1,3 +1,15 @@
+
+### Get this product for $5
+
+<i>Packt is having its biggest sale of the year. Get this eBook or any other book, video, or course that you like just for $5 each</i>
+
+
+<b><p align='center'>[Buy now](https://packt.link/9781789612769)</p></b>
+
+
+<b><p align='center'>[Buy similar titles for just $5](https://subscription.packtpub.com/search)</p></b>
+
+
 # Microsoft Dynamics NAV Development Quick Start Guide
 
 <a href="https://www.packtpub.com/application-development/microsoft-dynamics-nav-development-quick-start-guide?utm_source=Github&utm_medium=Repository&utm_campaign=9781789612769"><img src="https://www.packtpub.com/sites/default/files/B12138_cover.png" alt="Microsoft Dynamics NAV Development Quick Start Guide" height="256px" align="right"></a>
